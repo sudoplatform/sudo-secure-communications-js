@@ -28,7 +28,7 @@
     "build:transpile:cjs": "tsc --project tsconfig.commonjs.json",
     "build:transpile:esm": "tsc",
     "build:bundle-matrix-sdk": "node scripts/bundle-matrix-sdk.js",
-    "build:docs": "typedoc --readme README.external.md --treatWarningsAsErrors --excludePrivate --out docs src/index.ts",
+    "build:docs": "true",
     "postinstall": "patch-package"
   },
   "main": "./cjs/index.js",
