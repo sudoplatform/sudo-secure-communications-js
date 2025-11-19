@@ -1,0 +1,540 @@
+# Secure comms handle owner.
+type Owner {
+  # Unique ID of the owner.
+  id: String!
+  # Issuing service of the owner.
+  issuer: String!
+}
+
+# Secure comms handle.
+type SecureCommsHandle {
+  # Unique ID of the handle.
+  id: String!
+  # Object version.
+  version: Int!
+  # Secure comms handle name.
+  name: String!
+  # Sub of the user identity that owns the secure comms handle.
+  owner: String!
+  # List of auxiliary owners for the secure comms handle. For example, a Sudo.
+  owners: [Owner!]!
+  # Timestamp for when the handle was created expressed as milliseconds since epoch.
+  createdAtEpochMs: Float!
+  # Timestamp for when the handle was last updated expressed as milliseconds since epoch.
+  updatedAtEpochMs: Float!
+}
+
+# Subset of secure comms handle attributes that are visible
+# to other users.
+type PublicSecureCommsHandleInfo {
+  # Unique ID of the handle.
+  id: String!
+  # Secure comms handle name.
+  name: String!
+}
+
+# Secure comms handle listing.
+type SecureCommsHandleConnection {
+  items: [SecureCommsHandle!]!
+  nextToken: String
+}
+
+# Represents a secure comms session.
+type SecureCommsSession {
+  # Secure comms handle ID.
+  handleId: String!
+  # Secure comms handle name.
+  handleName: String!
+  # Unique ID of the device that initiated this session.
+  deviceId: String!
+  # Sub of the user identity that owns the secure comms handle.
+  owner: String!
+  # List of auxiliary owners for the secure comms handle. For example, a Sudo.
+  owners: [Owner!]!
+  # Authentication token required to sign into secure comms server.
+  token: String!
+  # Timestamp for when the session was created expressed as milliseconds since epoch.
+  createdAtEpochMs: Float!
+  # Timestamp for when the session will expire expressed as milliseconds since epoch.
+  expiresAtEpochMs: Float!
+}
+
+enum SecureCommsChannelMemberStatus {
+  INVITED
+  KNOCKING
+  JOINED
+  BANNED
+  LEFT
+}
+
+enum SecureCommsChannelJoinRule {
+  # Public channels can be joined by anyone without invitation.
+  PUBLIC
+  # Public channels requiring invitation. Invitations are solicited
+  # by knocking.
+  PUBLIC_WITH_INVITE
+  # Private channels require an invitation to join
+  PRIVATE
+}
+
+# Media bucket operation.
+enum MediaBucketOperation {
+  # Read-only operation, e.g. GetObject S3 operation.
+  READ
+  # Read and write operations, e.g PutObject and GetObject
+  # S3 operations.
+  READ_WRITE
+}
+
+type SecureCommsChannelMember {
+  # ID of member's handle
+  handleId: String!
+  # Joining status of the member with in the channel.
+  status: SecureCommsChannelMemberStatus!
+}
+
+# Fine-grained power levels for specific events, notifications or users
+type SecureCommsNamedPowerLevel {
+  # Room event type for event power level, handle ID for user power level or
+  # notification key for notification power level.
+  id: String!
+  powerLevel: Int!
+}
+
+type SecureCommsChannelPowerLevels {
+  # The level required to ban a user.
+  ban: Int!
+  # The level required to send specific event types. This is a mapping from event type to power level required.
+  # Its an error to specify the same event type more than once.
+  events: [SecureCommsNamedPowerLevel!]!
+  # The default level required to send message events. Can be overridden by the events key.
+  eventsDefault: Int!
+  # The level required to invite a user.
+  invite: Int!
+  # The level required to kick a user.
+  kick: Int!
+  # The power level requirements for specific notification types. This is a mapping from key to power level for that notifications key.
+  # Its an error to specify the same notification type more than once.
+  notifications: [SecureCommsNamedPowerLevel!]!
+  # The level required to redact an event sent by another user.
+  redact: Int!
+  # The default level required to send state events. Can be overridden by the events key.
+  stateDefault: Int!
+  # The power levels for specific users. This is a mapping from handleId to power level for that user.
+  users: [SecureCommsNamedPowerLevel!]!
+  # The power level for users in the room whose handleId is not mentioned in the users key.
+  usersDefault: Int!
+}
+
+# Unencrypted channels of users with manageable power levels.
+type SecureCommsChannel {
+  # ID of channel
+  id: String!
+  # Time at which channel was created
+  createdAtEpochMs: Float!
+  # Time at which channel was last updated
+  updatedAtEpochMs: Float!
+  # Current version of channel. Incremented on each update.
+  version: Int!
+  # Handle ID of the creator of the channel.
+  creatorHandleId: String!
+  # Name of channel. Names are unique across all channels. Names are able to be searched for. Names are mutable.
+  name: String!
+  # Description of channel. Descriptions are able to be searched for. Descriptions are mutable.
+  description: String
+  # Tags, if any, associated with the channel. Tags are able to be searched for.
+  tags: [String!]!
+  # Avatar image URL
+  avatarImageUrl: String
+  # Rule defining requirements to join the channel
+  joinRule: SecureCommsChannelJoinRule!
+  # Members of the channel
+  members: [SecureCommsChannelMember!]!
+  # Power levels for the channel
+  powerLevels: SecureCommsChannelPowerLevels!
+}
+
+type PublicSecureCommsChannelInfo {
+  # ID of channel
+  id: String!
+  # Time at which channel was created
+  createdAtEpochMs: Float!
+  # Time at which channel was last updated
+  updatedAtEpochMs: Float!
+  # Current version of channel. Incremented on each update.
+  version: Int!
+  # Name of channel. Names are unique across all channels. Names are able to be searched for. Names are mutable.
+  name: String!
+  # Description of channel. Descriptions are able to be searched for. Descriptions are mutable.
+  description: String
+  # Tags, if any, associated with the channel. Tags are able to be searched for.
+  tags: [String!]!
+  # Avatar image URL
+  avatarImageUrl: String
+  # Rule defining requirements to join the channel
+  joinRule: SecureCommsChannelJoinRule!
+}
+
+# Result of getSecureCommsChannels.
+type BatchPublicSecureCommsChannelInfo {
+  # Array of found items matching IDs in the batch get request.
+  items: [PublicSecureCommsChannelInfo!]!
+
+  # Array of IDs that were not fetched but should be retried.
+  unprocessedIds: [String!]!
+}
+
+# Same as PublicSecureCommsChannelInfo but with memberCount included.
+type ListedSecureCommsChannelInfo {
+  # ID of channel
+  id: String!
+  # Time at which channel was created
+  createdAtEpochMs: Float!
+  # Time at which channel's name, description, tags, join rule or avatar image, was last updated
+  updatedAtEpochMs: Float!
+  # Current version of channel. Incremented on each update.
+  version: Int!
+  # Name of channel. Names are unique across all channels. Names are able to be searched for. Names are mutable.
+  name: String!
+  # Description of channel. Descriptions are able to be searched for. Descriptions are mutable.
+  description: String
+  # Tags, if any, associated with the channel. Tags are able to be searched for.
+  tags: [String!]!
+  # Avatar image URL
+  avatarImageUrl: String
+  # Rule defining requirements to join the public channel
+  joinRule: SecureCommsPublicChannelJoinRule!
+  # Number of members currently joined in the channel
+  memberCount: Int!
+}
+
+# Result of listSecureCommsPublicChannels.
+type ListedSecureCommsChannelInfoConnection {
+  # Array of matching secure comms channel information matching the list criteria.
+  items: [ListedSecureCommsChannelInfo!]!
+
+  # Pagination token to use to fetch next page of results, if any.
+  nextToken: String
+}
+
+type SecureCommsChannelOpenSearchResponse {
+  hits: SecureCommsChannelOpenSearchResponseHits!
+}
+
+type SecureCommsChannelOpenSearchResponseHits {
+  hits: [SecureCommsChannelOpenSearchResponseHitsHits!]!
+}
+
+type SecureCommsChannelOpenSearchResponseHitsHits {
+  _source: PublicSecureCommsChannelInfo!
+}
+
+# Secure comms channel listing.
+type PublicSecureCommsChannelInfoConnection {
+  items: [PublicSecureCommsChannelInfo!]!
+  nextToken: String
+}
+
+# Credential that grants the client access to S3 bucket
+# that stores media objects.
+type MediaBucketCredential {
+  # Federated identity representing the shared room identity.
+  identityId: String!
+  # S3 object key prefix that must be used for creating and
+  # retrieving objects when using this credential.
+  keyPrefix: String!
+  # Access key ID to use to initializ a S3 client.
+  accessKeyId: String!
+  # Secret access key  to use to initializ a S3 client.
+  secretAccessKey: String!
+  # Session token  to use to initializ a S3 client.
+  sessionToken: String!
+  # Milliseconds since epoch time at the credential will expire.
+  expiration: Float!
+}
+
+# Input to createSecureCommsHandle mutation.
+input CreateSecureCommsHandleInput {
+  # Secure comms handle name.
+  name: String!
+  # Unique ID of the device that initiated this session.
+  deviceId: String!
+}
+
+# Fine-grained power levels for specific events, notifications or users
+input SecureCommsNamedPowerLevelInput {
+  # Room event type for event power level, handle ID for user power level or
+  # notification key for notification power level.
+  id: String!
+  powerLevel: Int!
+}
+
+input SecureCommsChannelPowerLevelsInput {
+  # The level required to ban a user. Defaults to 50 if unspecified.
+  ban: Int
+  # The level required to send specific event types. This is a mapping from event type to power level required.
+  # Its an error to specify the same event type more than once.
+  events: [SecureCommsNamedPowerLevelInput!]
+  # The default level required to send message events. Can be overridden by the events key. Defaults to 0 if unspecified.
+  eventsDefault: Int
+  # The level required to invite a user. Defaults to 0 if unspecified.
+  invite: Int
+  # The level required to kick a user. Defaults to 50 if unspecified.
+  kick: Int
+  # The power level requirements for specific notification types. This is a mapping from key to power level for that notifications key.
+  # Its an error to specify the same notification type more than once.
+  notifications: [SecureCommsNamedPowerLevelInput!]
+  # The level required to redact an event sent by another user. Defaults to 50 if unspecified.
+  redact: Int
+  # The default level required to send state events. Can be overridden by the events key. Defaults to 50 if unspecified.
+  stateDefault: Int
+  # The power levels for specific users. This is a mapping from handleId to power level for that user.
+  users: [SecureCommsNamedPowerLevelInput!]
+  # The power level for users in the room whose handleId is not mentioned in the users key. Defaults to 0 if unspecified.
+  usersDefault: Int
+}
+
+# Input to createSecureCommsChannel mutation
+input CreateSecureCommsChannelInput {
+  # Handle ID of the creator of the channel. This handle must be owned by
+  # the user requesting the channel creation.
+  creatorHandleId: String!
+  # The name of the channel. Must be unique across the system. Free form text.
+  # Maximum length: 64. Mutable.
+  name: String!
+  # Description of the channel. Optional. Default: none.
+  description: String
+  # Tags, if any, to associate with the channel. Tags are able to
+  # be searched for to find the channel. Optional. Default: no tags.
+  tags: [String!]
+  # Rule defining requirements to join the channel
+  joinRule: SecureCommsChannelJoinRule!
+  # URL of avatar to be used for channel if any
+  avatarImageUrl: String
+  # Other handle IDs to invite to the channel
+  invitations: [String!]
+  # Non-default power levels to set, if any. Non-default power levels for individual users are
+  powerLevels: SecureCommsChannelPowerLevelsInput
+}
+
+# New values of SecureCommsChannel properties to set by updateSecureCommsChannel
+# mutation. If property is not set then it will not be updated.
+input UpdateSecureCommsChannelSetInput {
+  # The name of the channel. Must be unique across the system. Free form text.
+  name: String
+
+  # Description of the channel.
+  description: String
+
+  # Tags, if any, to associate with the channel. Tags are able to
+  # be searched for to find the channel. Optional. Default: do not update tags.
+  # Updating keywords requires the same power level as updating name.
+  tags: [String!]
+
+  # Rule defining requirements to join the channel. Default: do not join rule.
+  joinRule: SecureCommsChannelJoinRule
+
+  # Avatar image URL
+  avatarImageUrl: String
+}
+
+# Names of SecureCommsChannel properties that are able to be unset
+# by updateSecureCommsChannel mutation
+enum SecureCommsChannelOptionalProperties {
+  description
+  avatarImageUrl
+}
+
+# Input to updateSecureCommsChannel mutation
+input UpdateSecureCommsChannelInput {
+  # ID of the channel to update
+  id: String!
+
+  # ID of the handle under which the channel is being updated.
+  handleId: String!
+
+  # Property values to set, if any. It is an error to set a value
+  # for a property here as well as include it in the unset list.
+  set: UpdateSecureCommsChannelSetInput
+
+  # Names of properties to unset, if any. It is an error to set a
+  # value for a property under set as well as include it in this
+  # list.
+  unset: [SecureCommsChannelOptionalProperties!]
+
+  # DEPRECATED: Use set instead to provide new values for these properties.
+  # These properties are provided for backwards compatibility until clients
+  # have been migrated to use set and unset instead.
+  name: String
+  description: String
+  tags: [String!]
+  joinRule: SecureCommsChannelJoinRule
+  avatarImageUrl: String
+}
+
+enum ListSecureCommsPublicChannelsOrderingField {
+  # Order by channel name
+  NAME
+  # Order by member count
+  MEMBER_COUNT
+}
+
+enum ListSecureCommsPublicChannelsOrderingDirection {
+  # Ascending order
+  ASC
+  # Descending order
+  DESC
+}
+
+input ListSecureCommsPublicChannelsOrdering {
+  # Field to order by
+  field: ListSecureCommsPublicChannelsOrderingField!
+  # Direction to order in
+  direction: ListSecureCommsPublicChannelsOrderingDirection!
+}
+
+#
+# Join rules for public channels. Subset of SecureCommsChannelJoinRule
+#
+enum SecureCommsPublicChannelJoinRule {
+  # Public channels can be joined by anyone without invitation.
+  PUBLIC
+  # Public channels requiring invitation. Invitations are solicited
+  # by knocking.
+  PUBLIC_WITH_INVITE
+  # Private channels require an invitation to join
+}
+
+input ListSecureCommsPublicChannelsInput {
+  # ID of the handle to test for membership. Required if isJoined is set.
+  # Must be a handle owned by the invoking user.
+  handleId: String
+
+  # Search term to filter channels by name or description.
+  search: String
+
+  # Tags to search for. If multiple tags are specified then channels with any of the tags
+  # will be returned.
+  tags: [String!]
+
+  # If specified, then only channels that the specified handle ID is either joined or not joined
+  # to will be returned.
+  isJoined: Boolean
+
+  # If specified, then only channels with the specified join rule will be returned.
+  joinRule: SecureCommsPublicChannelJoinRule
+
+  # Ordering to use to order the results. Default: by member count descending.
+  ordering: ListSecureCommsPublicChannelsOrdering
+
+  # Maximum number of items to return in the response. Default: 100
+  limit: Int
+
+  # Pagination token to use to fetch next page of results, if any.
+  nextToken: String
+}
+
+# Input to getSecureCommsSession query.
+input GetSecureCommsSessionInput {
+  # Secure comms handle ID.
+  handleId: String!
+  # Unique ID of the device that initiated this session.
+  deviceId: String!
+  # Token lifetime in seconds for the access token that will be issued.
+  tokenLifetime: Int
+}
+
+# Input to UpdateSecureCommsHandle mutation.
+input UpdateSecureCommsHandleInput {
+  # Secure comms handle ID.
+  id: String!
+  # Secure comms handle name to update.
+  name: String!
+}
+
+# Input to getMediaBucketCredential query.
+input GetMediaBucketCredentialInput {
+  # ID of the handle that the credential will be used for.
+  handleId: String!
+  # ID of the room that the credential will be used for.
+  roomId: String!
+  # Operation to perform with the requested credential.
+  operation: MediaBucketOperation!
+}
+
+type Query {
+ # Checks for validity of a word that may be rejected for use in a public, shared
+  # for e.g. channel name, keyword, tag. Returns array of valid words from the input.
+  checkSecureCommsWordValidity(words: [String!]!): [String!]!
+
+  # Returns a new secure comms session for the specified handle and device ID.
+  getSecureCommsSession(
+    input: GetSecureCommsSessionInput!
+  ): SecureCommsSession!
+
+  # Returns a secure comms handle with the specified name.
+  getSecureCommsHandleByName(name: String!): PublicSecureCommsHandleInfo
+
+  # Returns a secure comms channel with the specified ID.
+  getSecureCommsChannel(id: String!): PublicSecureCommsChannelInfo
+
+  # Returns a secure comms channels with the specified IDs.
+  # Maximum number of IDs at any one time is 100.
+  getSecureCommsChannels(ids: [String!]!): BatchPublicSecureCommsChannelInfo!
+
+  # Returns public secure comms channels in order specified. Filter criteria
+  # may also be specified. Results are paginated.
+  listSecureCommsPublicChannels(
+    input: ListSecureCommsPublicChannelsInput!
+  ): ListedSecureCommsChannelInfoConnection!
+
+  # Retrieves the list of secure comms handles owned by the authenticated user.
+  # "limit" parameter can be used to limit the number of items returned
+  # and "nextToken" parameter can be used to paginate if there's more
+  # items to fetch.
+  listSecureCommsHandles(
+    limit: Int
+    nextToken: String
+  ): SecureCommsHandleConnection!
+
+  # Retrieves a temporary AWS credential for accessing S3 bucket
+  # that stores media objects.
+  getMediaBucketCredential(
+    input: GetMediaBucketCredentialInput!
+  ): MediaBucketCredential!
+}
+
+type Mutation {
+  # Registers a new secure comms handle, creates a new session and returns the
+  # session information including the authentication token required to sign
+  # into secure comms server.
+  createSecureCommsHandle(
+    input: CreateSecureCommsHandleInput!
+  ): SecureCommsSession!
+
+  # Updates an existing secure comms handle owned by the authenticated user.
+  updateSecureCommsHandle(
+    input: UpdateSecureCommsHandleInput!
+  ): SecureCommsHandle!
+
+  # Deletes a secure comms handle by its ID.
+  deleteSecureCommsHandle(id: String!): SecureCommsHandle!
+
+  # Registers a new secure comms channel.
+  createSecureCommsChannel(
+    input: CreateSecureCommsChannelInput!
+  ): SecureCommsChannel!
+
+  # Update a secure comms channel. Equivalent
+  # to updateSecureCommsChannel with new property
+  # values also specified to set.
+  updateSecureCommsChannel(
+    input: UpdateSecureCommsChannelInput!
+  ): PublicSecureCommsChannelInfo!
+
+  # Deletes a secure comms channel by its ID as a particular secure comms user.
+  deleteSecureCommsChannel(
+    channelId: String!
+    handleId: String!
+  ): PublicSecureCommsChannelInfo!
+}

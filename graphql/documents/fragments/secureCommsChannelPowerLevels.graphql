@@ -1,0 +1,19 @@
+fragment SecureCommsChannelPowerLevels on SecureCommsChannelPowerLevels {
+  __typename
+  ban
+  events {
+    ...SecureCommsNamedPowerLevel
+  }
+  eventsDefault
+  invite
+  kick
+  notifications {
+    ...SecureCommsNamedPowerLevel
+  }
+  redact
+  stateDefault
+  users {
+    ...SecureCommsNamedPowerLevel
+  }
+  usersDefault
+}

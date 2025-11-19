@@ -1,0 +1,13 @@
+fragment SecureCommsSession on SecureCommsSession {
+  handleId
+  handleName
+  deviceId
+  owner
+  owners {
+    id
+    issuer
+  }
+  token
+  createdAtEpochMs
+  expiresAtEpochMs
+}

@@ -1,0 +1,4 @@
+fragment SecureCommsChannelMember on SecureCommsChannelMember {
+  handleId
+  status
+}

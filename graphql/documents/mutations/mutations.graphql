@@ -1,0 +1,35 @@
+mutation CreateSecureCommsHandle($input: CreateSecureCommsHandleInput!) {
+  createSecureCommsHandle(input: $input) {
+    ...SecureCommsSession
+  }
+}
+
+mutation UpdateSecureCommsHandle($input: UpdateSecureCommsHandleInput!) {
+  updateSecureCommsHandle(input: $input) {
+    ...SecureCommsHandle
+  }
+}
+
+mutation DeleteSecureCommsHandle($id: String!) {
+  deleteSecureCommsHandle(id: $id) {
+    ...SecureCommsHandle
+  }
+}
+
+mutation CreateSecureCommsChannel($input: CreateSecureCommsChannelInput!) {
+  createSecureCommsChannel(input: $input) {
+    ...SecureCommsChannel
+  }
+}
+
+mutation UpdateSecureCommsChannel($input: UpdateSecureCommsChannelInput!) {
+  updateSecureCommsChannel(input: $input) {
+    ...PublicSecureCommsChannelInfo
+  }
+}
+
+mutation DeleteSecureCommsChannel($channelId: String!, $handleId: String!) {
+  deleteSecureCommsChannel(channelId: $channelId, handleId: $handleId) {
+    ...PublicSecureCommsChannelInfo
+  }
+}

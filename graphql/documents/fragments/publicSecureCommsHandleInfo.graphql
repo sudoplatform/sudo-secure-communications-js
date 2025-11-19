@@ -1,0 +1,4 @@
+fragment PublicSecureCommsHandleInfo on PublicSecureCommsHandleInfo {
+  id
+  name
+}

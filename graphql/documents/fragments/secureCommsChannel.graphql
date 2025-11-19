@@ -1,0 +1,18 @@
+fragment SecureCommsChannel on SecureCommsChannel {
+  id
+  createdAtEpochMs
+  updatedAtEpochMs
+  version
+  creatorHandleId
+  joinRule
+  name
+  description
+  tags
+  avatarImageUrl
+  members {
+    ...SecureCommsChannelMember
+  }
+  powerLevels {
+    ...SecureCommsChannelPowerLevels
+  }
+}

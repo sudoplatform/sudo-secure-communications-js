@@ -1,0 +1,11 @@
+# Secure Communications SDK JS Tests
+
+Included in this directory is a set of tests to fully test the SDK capabilities against an instance of SCS.
+
+## Debugging (Capturing Requests)
+
+In order to capture requests while running the tests, you will need to set two environment variables:
+- GLOBAL_AGENT_HTTP_PROXY=<http://proxy-ip:port>
+- NODE_TLS_REJECT_UNAUTHORIZED=0
+
+Using the **global-agent** package, it will read the value of the GLOBAL_AGENT_HTTP_PROXY.  NODE_TLS_REJECT_UNAUTHORIZED allows the node process to ignore self-signed/expired certificate errors.

@@ -1,0 +1,6 @@
+fragment BatchPublicSecureCommsChannelInfo on BatchPublicSecureCommsChannelInfo {
+    items {
+        ...PublicSecureCommsChannelInfo
+    }
+    unprocessedIds
+}

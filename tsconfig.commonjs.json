@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "cjs",
+    "paths": {
+      "matrix-js-sdk": ["./cjs/matrix-js-sdk/index"],
+      "matrix-js-sdk/*": ["./cjs/matrix-js-sdk/*"]
+    }
+  }
+}

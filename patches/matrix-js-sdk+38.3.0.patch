@@ -1,0 +1,66 @@
+diff --git a/node_modules/matrix-js-sdk/lib/sliding-sync.js b/node_modules/matrix-js-sdk/lib/sliding-sync.js
+index 7a8dbf6..5e1b62e 100644
+--- a/node_modules/matrix-js-sdk/lib/sliding-sync.js
++++ b/node_modules/matrix-js-sdk/lib/sliding-sync.js
+@@ -19,6 +19,7 @@ limitations under the License.
+ import { logger } from "./logger.js";
+ import { TypedEventEmitter } from "./models/typed-event-emitter.js";
+ import { sleep } from "./utils.js";
++import { v4 } from "uuid";
+ // /sync requests allow you to set a timeout= but the request may continue
+ // beyond that and wedge forever, so we need to track how long we are willing
+ // to keep open the connection. This constant is *ADDED* to the timeout= value
+@@ -479,6 +480,7 @@ export class SlidingSync extends TypedEventEmitter {
+     var _this5 = this;
+     return _asyncToGenerator(function* () {
+       _this5.abortController = new AbortController();
++      var connId = v4();
+       var currentPos;
+       var _loop = function* _loop() {
+           _this5.needsResend = false;
+@@ -494,7 +496,8 @@ export class SlidingSync extends TypedEventEmitter {
+               pos: currentPos,
+               timeout: _this5.timeoutMS,
+               clientTimeout: _this5.timeoutMS + BUFFER_PERIOD_MS,
+-              extensions: yield _this5.getExtensionRequest(currentPos === undefined)
++              extensions: yield _this5.getExtensionRequest(currentPos === undefined),
++              conn_id: connId
+             };
+             // check if we are (un)subscribing to a room and modify request this one time for it
+             var newSubscriptions = difference(_this5.desiredRoomSubscriptions, _this5.confirmedRoomSubscriptions);
+diff --git a/node_modules/matrix-js-sdk/src/sliding-sync.ts b/node_modules/matrix-js-sdk/src/sliding-sync.ts
+index e2a791c..f430d89 100644
+--- a/node_modules/matrix-js-sdk/src/sliding-sync.ts
++++ b/node_modules/matrix-js-sdk/src/sliding-sync.ts
+@@ -20,6 +20,7 @@ import { type IRoomEvent, type IStateEvent } from "./sync-accumulator.ts";
+ import { TypedEventEmitter } from "./models/typed-event-emitter.ts";
+ import { sleep } from "./utils.ts";
+ import { type HTTPError } from "./http-api/index.ts";
++import { v4 } from "uuid";
+ 
+ // /sync requests allow you to set a timeout= but the request may continue
+ // beyond that and wedge forever, so we need to track how long we are willing
+@@ -75,6 +76,7 @@ export interface MSC3575SlidingSyncRequest {
+     room_subscriptions?: Record<string, MSC3575RoomSubscription>;
+     extensions?: object;
+     txn_id?: string;
++    conn_id: string;
+ 
+     // query params
+     pos?: string;
+@@ -573,6 +575,7 @@ export class SlidingSync extends TypedEventEmitter<SlidingSyncEvent, SlidingSync
+      */
+     public async start(): Promise<void> {
+         this.abortController = new AbortController();
++        const connId = v4();
+ 
+         let currentPos: string | undefined;
+         while (!this.terminated) {
+@@ -589,6 +592,7 @@ export class SlidingSync extends TypedEventEmitter<SlidingSyncEvent, SlidingSync
+                     timeout: this.timeoutMS,
+                     clientTimeout: this.timeoutMS + BUFFER_PERIOD_MS,
+                     extensions: await this.getExtensionRequest(currentPos === undefined),
++                    conn_id: connId,
+                 };
+                 // check if we are (un)subscribing to a room and modify request this one time for it
+                 const newSubscriptions = difference(this.desiredRoomSubscriptions, this.confirmedRoomSubscriptions);

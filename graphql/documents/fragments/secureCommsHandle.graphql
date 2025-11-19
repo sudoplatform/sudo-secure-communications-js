@@ -1,0 +1,12 @@
+fragment SecureCommsHandle on SecureCommsHandle {
+  id
+  version
+  name
+  owner
+  owners {
+    id
+    issuer
+  }
+  createdAtEpochMs
+  updatedAtEpochMs
+}

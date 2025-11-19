@@ -1,0 +1,53 @@
+query CheckSecureCommsWordValidity($words: [String!]!) {
+  checkSecureCommsWordValidity(words: $words)
+}
+
+query GetSecureCommsSession($input: GetSecureCommsSessionInput!) {
+  getSecureCommsSession(input: $input) {
+    ...SecureCommsSession
+  }
+}
+
+query GetSecureCommsHandleByName($name: String!) {
+  getSecureCommsHandleByName(name: $name) {
+    ...PublicSecureCommsHandleInfo
+  }
+}
+
+query GetSecureCommsChannel($id: String!) {
+  getSecureCommsChannel(id: $id) {
+    ...PublicSecureCommsChannelInfo
+  }
+}
+
+query GetSecureCommsChannels($ids: [String!]!) {
+  getSecureCommsChannels(ids: $ids) {
+    ...BatchPublicSecureCommsChannelInfo
+  }
+}
+
+query ListSecureCommsPublicChannels(
+  $input: ListSecureCommsPublicChannelsInput!
+) {
+  listSecureCommsPublicChannels(input: $input) {
+    items {
+      ...ListedSecureCommsChannelInfo
+    }
+    nextToken
+  }
+}
+
+query ListSecureCommsHandles($limit: Int, $nextToken: String) {
+  listSecureCommsHandles(limit: $limit, nextToken: $nextToken) {
+    items {
+      ...SecureCommsHandle
+    }
+    nextToken
+  }
+}
+
+query GetMediaBucketCredential($input: GetMediaBucketCredentialInput!) {
+  getMediaBucketCredential(input: $input) {
+    ...MediaBucketCredential
+  }
+}

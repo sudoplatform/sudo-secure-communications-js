@@ -1,0 +1,27 @@
+{
+  "preset": "ts-jest/presets/js-with-ts",
+  "testEnvironment": "jsdom",
+  "testMatch": ["<rootDir>/test/**/*.test.ts"],
+  "testPathIgnorePatterns": ["/node_modules/", "/lib/", "/cjs/", "/types/"],
+  "setupFilesAfterEnv": ["./jest.setup.ts"],
+  "clearMocks": true,
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!src/**/*.spec.ts",
+    "!**/*.d.ts",
+    "!node_modules/**"
+  ],
+  "coverageReporters": ["text", "json-summary", "html"],
+  "coverageDirectory": "<rootDir>/build/coverage",
+  "moduleDirectories": ["node_modules"],
+  "moduleNameMapper": {
+    "^@matrix-org/matrix-sdk-crypto-wasm$": "<rootDir>/node_modules/@matrix-org/matrix-sdk-crypto-wasm/node.cjs"
+  },
+  "globals": {
+    "ts-jest": {
+      "tsconfig": "tsconfig.test.json"
+    }
+  },
+  "testRunner": "jest-jasmine2",
+  "transformIgnorePatterns": ["node_modules/(?!(matrix-js-sdk)/)"]
+}

@@ -1,0 +1,12 @@
+fragment ListedSecureCommsChannelInfo on ListedSecureCommsChannelInfo {
+  id
+  createdAtEpochMs
+  updatedAtEpochMs
+  version
+  name
+  description
+  tags
+  avatarImageUrl
+  joinRule
+  memberCount
+}

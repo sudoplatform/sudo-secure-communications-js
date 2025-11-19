@@ -1,0 +1,5 @@
+fragment SecureCommsNamedPowerLevel on SecureCommsNamedPowerLevel {
+  __typename
+  id
+  powerLevel
+}

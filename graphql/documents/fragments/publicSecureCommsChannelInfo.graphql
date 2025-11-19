@@ -1,0 +1,11 @@
+fragment PublicSecureCommsChannelInfo on PublicSecureCommsChannelInfo {
+  id
+  createdAtEpochMs
+  updatedAtEpochMs
+  version
+  name
+  description
+  joinRule
+  tags
+  avatarImageUrl
+}
