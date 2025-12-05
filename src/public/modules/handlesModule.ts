@@ -22,11 +22,13 @@ import { HandleId, OwnedHandle } from '../typings'
  * Properties required to provision a handle.
  *
  * @interface ProvisionHandleInput
+ * @property {string} id Optional handle ID.
  * @property {string} name The name of the handle that will be publicly visible to other users.
  * @property {string} storePassphrase (Optional) The passphrase to use for the handle's storage.
  *  If not provided, the local storage will not be encrypted.
  */
 export interface ProvisionHandleInput {
+  id?: string
   name: string
   storePassphrase?: string
 }
@@ -113,6 +115,7 @@ export class DefaultHandlesModule implements HandlesModule {
       this.sessionManager,
     )
     const result = await useCase.execute({
+      id: input.id,
       name: input.name,
       storePassphrase: input.storePassphrase,
     })

@@ -18,6 +18,7 @@ import { WordValidationService } from '../../entities/wordValidation/wordValidat
  * @interface ProvisionHandleUseCaseInput
  */
 interface ProvisionHandleUseCaseInput {
+  id?: string
   name: string
   storePassphrase?: string
 }
@@ -51,6 +52,7 @@ export class ProvisionHandleUseCase {
     // Use a new device ID for every new handle to avoid any correlation between handles.
     const deviceId = v4()
     const session = await this.sessionService.create({
+      id: input.id,
       name: input.name,
       deviceId,
     })

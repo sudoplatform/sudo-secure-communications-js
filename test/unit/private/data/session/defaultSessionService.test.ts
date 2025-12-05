@@ -45,6 +45,28 @@ describe('DefaultSessionService Test Suite', () => {
       expect(result).toStrictEqual(EntityDataFactory.secureCommsSession)
       const [inputArgs] = capture(mockAppSync.createSecureCommsHandle).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        id: undefined,
+        name: 'fooName',
+        deviceId: 'barDeviceId',
+      })
+      verify(mockAppSync.createSecureCommsHandle(anything())).once()
+    })
+
+    it('calls appSync and returns result correctly with handleId provided', async () => {
+      when(mockAppSync.createSecureCommsHandle(anything())).thenResolve(
+        GraphQLDataFactory.secureCommsSession,
+      )
+      const input: CreateSessionInput = {
+        id: 'fooId',
+        name: 'fooName',
+        deviceId: 'barDeviceId',
+      }
+      const result = await instanceUnderTest.create(input)
+
+      expect(result).toStrictEqual(EntityDataFactory.secureCommsSession)
+      const [inputArgs] = capture(mockAppSync.createSecureCommsHandle).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        id: 'fooId',
         name: 'fooName',
         deviceId: 'barDeviceId',
       })

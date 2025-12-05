@@ -823,7 +823,6 @@ describe('SecureCommsClient Test Suite', () => {
     poolId: 'poolId',
     clientId: 'clientId',
     identityPoolId: 'identityPoolId',
-    apiKey: 'apiKey',
     apiUrl: 'apiUrl',
     transientBucket: 'transientBucket',
     registrationMethods: [],
@@ -1427,6 +1426,17 @@ describe('SecureCommsClient Test Suite', () => {
         expect(args).toEqual({
           name,
         })
+      })
+      it('calls use case as expected with id provided', async () => {
+        const id = v4()
+        const name = v4()
+        await instanceUnderTest.handles.provisionHandle({
+          id,
+          name,
+        })
+        verify(mockProvisionHandleUseCase.execute(anything())).once()
+        const [args] = capture(mockProvisionHandleUseCase.execute).first()
+        expect(args).toEqual({ id, name })
       })
       it('returns expected result', async () => {
         await expect(

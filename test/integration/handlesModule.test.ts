@@ -85,6 +85,54 @@ describe('SecureCommsClient HandlesModule Test Suite', () => {
       ).resolves.not.toThrow()
     })
 
+    it('provisions, retrieves, updates and deprovisions a handle successfully with id provided', async () => {
+      // Provision a handle
+      const id = v4()
+      const handleId = new HandleId(id)
+      const name = v4()
+      const provisionedHandle = await instanceUnderTest.handles.provisionHandle(
+        {
+          id,
+          name,
+        },
+      )
+      expect(provisionedHandle).toEqual({
+        handleId,
+        name: name,
+        owner,
+        owners: [{ id: owner, issuer: userOwnerIssuer }],
+      })
+
+      // List the single provisioned handle
+      const listedHandles = await instanceUnderTest.handles.listHandles({})
+      expect(listedHandles.items).toHaveLength(1)
+      expect(listedHandles.items[0]).toMatchObject({
+        handleId,
+        name: name,
+        owner,
+        owners: [{ id: owner, issuer: userOwnerIssuer }],
+      })
+      expect(listedHandles.nextToken).toBeFalsy()
+
+      // Update a handle
+      const newName = v4()
+      const updatedHandle = await instanceUnderTest.handles.updateHandle({
+        handleId: provisionedHandle.handleId,
+        name: newName,
+      })
+      expect(updatedHandle).toEqual({
+        handleId: provisionedHandle.handleId,
+        name: newName,
+        owner,
+        owners: [{ id: owner, issuer: userOwnerIssuer }],
+      })
+
+      // Deprovision the handle
+      await expect(
+        instanceUnderTest.handles.deprovisionHandle(handleId),
+      ).resolves.not.toThrow()
+    })
+
     it('retrieves a list of handles respecting limit successfully', async () => {
       const name1 = v4()
       const handle1 = await instanceUnderTest.handles.provisionHandle({

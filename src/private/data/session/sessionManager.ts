@@ -90,37 +90,60 @@ export class SessionManager {
     const newStorePassphrase: string | undefined =
       cachedSession?.storePassphrase ?? storePassphrase ?? undefined
 
-    let deviceId: string | undefined = undefined
+    let deviceId: string | undefined
 
     if (cachedSession) {
-      // validate cached token
       const decoded = JWT.decode(cachedSession.accessToken) as Record<
         string,
         string
       >
+
       deviceId = decoded.device_id
+
       const expiry = parseInt(decoded.exp, 10)
       const now = Math.floor(Date.now() / 1000)
-      if (expiry >= now) {
-        if (
-          cachedSession.matrixClient.isUsingToken(cachedSession.accessToken)
-        ) {
-          // happy path - we have a valid session
-          return cachedSession.accessToken
-        }
+      const isExpiredOrExpiringSoon = expiry - now <= 300 // Check if the token has expired or will expire in 300 seconds
+
+      if (
+        !isExpiredOrExpiringSoon &&
+        cachedSession.matrixClient.isUsingToken(cachedSession.accessToken)
+      ) {
+        return cachedSession.accessToken
       }
 
-      // sad path - we have a cached session, but it is expired
+      // token is expired or different than matrix token. Refresh
+      try {
+        const newSession = await this.sessionService.get({
+          handleId: handleId.toString(),
+          deviceId: deviceId ?? v4(),
+        })
 
-      // clean up defunct matrix client
-      cachedSession.matrixClient.stopSyncing()
-      // do not close storage - we are using storageManager to manage storage providers lifecycle.
+        const newToken = newSession.token
 
-      // remove cached session
-      delete this.sessions[handleId.toString()]
+        // update matrix client and session with new token
+        cachedSession.matrixClient.updateAccessToken(newToken)
+        this.sessions[handleId.toString()] = {
+          accessToken: newToken,
+          storePassphrase: newStorePassphrase,
+          matrixClient: cachedSession.matrixClient,
+        }
+
+        // store session for future reloads
+        const handleStorage = await this.storageModule.useHandleStorage(
+          handleId.toString(),
+          newStorePassphrase,
+        )
+        await handleStorage?.secureCommsStore.sessionAPIs.saveAccessToken(
+          newToken,
+        )
+
+        return newToken
+      } catch {
+        // if refresh fails. clean up defunct matrix client and remove cached session
+        await cachedSession.matrixClient.stopSyncing()
+        delete this.sessions[handleId.toString()]
+      }
     }
-
-    // by now we should have no cached session for this handleId
 
     // useHandleStorage will initialize the handle storage if it is not already initialized.
     const handleStorage = await this.storageModule.useHandleStorage(
@@ -139,7 +162,9 @@ export class SessionManager {
       deviceId = decoded.device_id
       const expiry = parseInt(decoded.exp, 10)
       const now = Math.floor(Date.now() / 1000)
-      if (expiry >= now) {
+      const isExpiredOrExpiringSoon = expiry - now <= 300 // Check if the token has expired or will expire in 300 seconds
+
+      if (!isExpiredOrExpiringSoon) {
         accessToken = storedAccessToken
       } else {
         // get new access token

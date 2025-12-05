@@ -223,7 +223,6 @@ export interface SendMediaInput {
   thumbnail?: ArrayBuffer
   thumbnailInfo?: ThumbnailInfo
   threadId?: string
-  previousMessageId?: string
   replyToMessageId?: string
   clientMessageDuration?: number
   serverMessageDuration?: number

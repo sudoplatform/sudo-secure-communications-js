@@ -69,6 +69,7 @@ describe('ProvisionHandleUseCase Test Suite', () => {
       verify(mockWordValidationService.checkWordValidity(anything())).once()
       const [inputArgs] = capture(mockSessionService.create).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        id: undefined,
         name,
         deviceId: expect.any(String),
       })
@@ -81,6 +82,58 @@ describe('ProvisionHandleUseCase Test Suite', () => {
       ).first()
       expect(handleIdArg).toStrictEqual<typeof handleIdArg>(
         new HandleId(EntityDataFactory.secureCommsSession.handleId),
+      )
+      expect(storePassphraseArg).toStrictEqual<typeof storePassphraseArg>(
+        storePassphrase,
+      )
+      verify(
+        mockSessionManager.ensureValidSession(anything(), anything()),
+      ).once()
+    })
+
+    it('Provisions the handle with id provided', async () => {
+      const id = 'fooId'
+      const name = 'fooName'
+      const words = new Set([name])
+      const storePassphrase = 'testStorePassphrase'
+      when(mockWordValidationService.checkWordValidity(anything())).thenResolve(
+        words,
+      )
+      when(mockSessionService.create(anything())).thenResolve({
+        ...EntityDataFactory.secureCommsSession,
+        handleId: id,
+      })
+
+      const result = await instanceUnderTest.execute({
+        id,
+        name,
+        storePassphrase,
+      })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.ownedHandle,
+        handleId: new HandleId(id),
+      })
+      const [inputWordArgs] = capture(
+        mockWordValidationService.checkWordValidity,
+      ).first()
+      expect(inputWordArgs).toStrictEqual<typeof inputWordArgs>(words)
+      verify(mockWordValidationService.checkWordValidity(anything())).once()
+      const [inputArgs] = capture(mockSessionService.create).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        id,
+        name,
+        deviceId: expect.any(String),
+      })
+      verify(mockSessionService.create(anything())).once()
+      verify(
+        mockSessionManager.ensureValidSession(anything(), anything()),
+      ).once()
+      const [handleIdArg, storePassphraseArg] = capture(
+        mockSessionManager.ensureValidSession,
+      ).first()
+      expect(handleIdArg).toStrictEqual<typeof handleIdArg>(
+        new HandleId('fooId'),
       )
       expect(storePassphraseArg).toStrictEqual<typeof storePassphraseArg>(
         storePassphrase,

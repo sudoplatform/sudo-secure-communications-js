@@ -26,6 +26,7 @@ export class DefaultSessionService implements SessionService {
 
   async create(input: CreateSessionInput): Promise<SecureCommsSessionEntity> {
     const createHandleInput: CreateSecureCommsHandleInput = {
+      id: input.id,
       name: input.name,
       deviceId: input.deviceId,
     }

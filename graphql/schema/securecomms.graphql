@@ -255,6 +255,8 @@ type MediaBucketCredential {
 
 # Input to createSecureCommsHandle mutation.
 input CreateSecureCommsHandleInput {
+  # Optional handle ID.
+  id: String
   # Secure comms handle name.
   name: String!
   # Unique ID of the device that initiated this session.
@@ -463,14 +465,12 @@ input GetMediaBucketCredentialInput {
 }
 
 type Query {
- # Checks for validity of a word that may be rejected for use in a public, shared
+  # Checks for validity of a word that may be rejected for use in a public, shared
   # for e.g. channel name, keyword, tag. Returns array of valid words from the input.
   checkSecureCommsWordValidity(words: [String!]!): [String!]!
 
   # Returns a new secure comms session for the specified handle and device ID.
-  getSecureCommsSession(
-    input: GetSecureCommsSessionInput!
-  ): SecureCommsSession!
+  getSecureCommsSession(input: GetSecureCommsSessionInput!): SecureCommsSession!
 
   # Returns a secure comms handle with the specified name.
   getSecureCommsHandleByName(name: String!): PublicSecureCommsHandleInfo

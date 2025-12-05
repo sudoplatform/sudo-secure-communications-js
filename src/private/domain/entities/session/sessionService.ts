@@ -10,10 +10,12 @@ import { SecureCommsSessionEntity } from './secureCommsSessionEntity'
  * Input for `SessionService.create` method.
  *
  * @interface CreateSessionInput
+ * @property {string} id Optional handle ID.
  * @property {string} name Name of the Secure Comms handle.
  * @property {string} deviceId Identifier of the device that initiated this session.
  */
 export interface CreateSessionInput {
+  id?: string
   name: string
   deviceId: string
 }

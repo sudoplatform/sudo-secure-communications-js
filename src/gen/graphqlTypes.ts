@@ -58,6 +58,7 @@ export type CreateSecureCommsChannelInput = {
 
 export type CreateSecureCommsHandleInput = {
   deviceId: Scalars['String']['input']
+  id?: InputMaybe<Scalars['String']['input']>
   name: Scalars['String']['input']
 }
 

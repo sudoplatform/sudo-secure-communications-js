@@ -140,8 +140,8 @@ class MatrixLogger extends DefaultLogger implements Logger {
 export class MatrixClientManager {
   private readonly log: Logger
   private readonly client: MatrixClient
-  private readonly accessToken: string
   private readonly deviceId: string
+  private accessToken: string
   readonly homeServer: string
   private currentSecretStorageKey?: {
     keyId: string
@@ -158,6 +158,7 @@ export class MatrixClientManager {
 
     this.deviceId = decoded.device_id
     this.homeServer = decoded.homeserver
+    this.accessToken = accessToken
 
     const config = getSecureCommsServiceConfig()
     const baseUrl = config.serviceEndpointUrl
@@ -173,7 +174,7 @@ export class MatrixClientManager {
         // Placeholder UA string here. Exact string TBD
         headers.set('User-Agent', 'SecureCommTest/1.0.0 Node')
       }
-      headers.set('Authorization', `Bearer ${accessToken}`)
+      headers.set('Authorization', `Bearer ${this.accessToken}`)
       const authInit: RequestInit = {
         ...init,
         headers,
@@ -217,6 +218,11 @@ export class MatrixClientManager {
 
   public isUsingToken(token: string): boolean {
     return token === this.accessToken
+  }
+
+  public updateAccessToken(token: string): void {
+    this.accessToken = token
+    this.client.setAccessToken(token)
   }
 
   public async signIn(): Promise<void> {
@@ -1140,7 +1146,7 @@ export class MatrixClientManager {
     // Construct a raw event to edit a message.
     const editContent: RoomMessageEventContent = {
       msgtype: MsgType.Text,
-      body: `${content.body} (edited)`, // User-visible edit marker to be Matrix-spec compliant for legacy clients
+      body: content.body,
       'm.new_content': {
         msgtype: MsgType.Text,
         body: content.body,
