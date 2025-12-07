@@ -17,7 +17,10 @@ import {
 import { MatrixClientManager } from '../../../../../src/private/data/common/matrixClientManager'
 import { MatrixMediaService } from '../../../../../src/private/data/media/matrixMediaService'
 import { MatrixMessagingService } from '../../../../../src/private/data/messaging/matrixMessagingService'
-import { MessageMentionEntity } from '../../../../../src/private/domain/entities/messaging/messageEntity'
+import {
+  DeleteOwnRedactReasonEntity,
+  MessageMentionEntity,
+} from '../../../../../src/private/domain/entities/messaging/messageEntity'
 import {
   CreatePollInput,
   DeleteMessageInput,
@@ -753,10 +756,8 @@ describe('MatrixMessagingService Test Suite', () => {
         recipient: handleId,
         messageId: 'messageId',
         reason: {
-          type: 'moderation',
-          reason: 'Moderation Reason',
-          hide: false,
-        },
+          type: 'deleteOwn',
+        } as DeleteOwnRedactReasonEntity,
       }
       await expect(instanceUnderTest.delete(input)).resolves.not.toThrow()
 
@@ -765,9 +766,7 @@ describe('MatrixMessagingService Test Suite', () => {
       ).first()
       expect(idArg).toStrictEqual<typeof idArg>(handleId.toString())
       expect(eventIdArg).toStrictEqual<typeof eventIdArg>(input.messageId)
-      expect(reasonArg).toStrictEqual<typeof reasonArg>(
-        'Message was moderated: Moderation Reason',
-      )
+      expect(reasonArg).toStrictEqual<typeof reasonArg>('deleteOwn')
       verify(
         mockMatrixClientManager.deleteMessage(
           anything(),

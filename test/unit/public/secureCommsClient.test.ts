@@ -136,7 +136,9 @@ import {
   GroupId,
   GroupRole,
   HandleId,
+  Message,
   MessageNotificationLevel,
+  MessageState,
   PublicChannelJoinRule,
   SecureCommsClient,
   SendPollResponseInput,
@@ -4571,6 +4573,629 @@ describe('SecureCommsClient Test Suite', () => {
             pollId,
           }),
         ).resolves.toEqual(APIDataFactory.pollResponses)
+      })
+    })
+    describe('registerMessageListener', () => {
+      const handleId = new HandleId('testHandleId')
+      const recipient = new HandleId('testRecipientId')
+      const listenerName = 'testListener'
+      const mockListener = jest.fn()
+      const mockMatrixClient = {
+        registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+      } as any
+
+      beforeEach(() => {
+        mockListener.mockClear()
+        const messagingModule = instanceUnderTest.messaging as any
+        jest
+          .spyOn(messagingModule.sessionManager, 'getMatrixClient')
+          .mockResolvedValue(mockMatrixClient)
+      })
+
+      afterEach(() => {
+        jest.restoreAllMocks()
+      })
+
+      it('registers a message listener successfully', async () => {
+        await expect(
+          instanceUnderTest.messaging.registerMessageListener({
+            handleId,
+            recipient,
+            name: listenerName,
+            listener: mockListener,
+          }),
+        ).resolves.not.toThrow()
+
+        expect(mockMatrixClient.registerEventListener).toHaveBeenCalledTimes(1)
+      })
+
+      it('allows registering multiple listeners with different names for same handle and recipient', async () => {
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener1',
+          listener: listener1,
+        })
+        await expect(
+          instanceUnderTest.messaging.registerMessageListener({
+            handleId,
+            recipient,
+            name: 'listener2',
+            listener: listener2,
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient.registerEventListener).toHaveBeenCalledTimes(1)
+      })
+
+      it('allows registering listeners for different recipients', async () => {
+        const recipient1 = new HandleId('recipient1')
+        const recipient2 = new HandleId('recipient2')
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient1,
+          name: listenerName,
+          listener: listener1,
+        })
+        await expect(
+          instanceUnderTest.messaging.registerMessageListener({
+            handleId,
+            recipient: recipient2,
+            name: listenerName,
+            listener: listener2,
+          }),
+        ).resolves.not.toThrow()
+      })
+
+      it('allows registering listeners for different handles', async () => {
+        const handleId1 = new HandleId('handle1')
+        const handleId2 = new HandleId('handle2')
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        const mockMatrixClient1 = {
+          registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+        } as any
+        const mockMatrixClient2 = {
+          registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+        } as any
+
+        const messagingModule = instanceUnderTest.messaging as any
+        jest
+          .spyOn(messagingModule.sessionManager, 'getMatrixClient')
+          .mockImplementation((...args: unknown[]) => {
+            const handleId = args[0] as HandleId
+            if (handleId.toString() === handleId1.toString()) {
+              return Promise.resolve(mockMatrixClient1)
+            }
+            if (handleId.toString() === handleId2.toString()) {
+              return Promise.resolve(mockMatrixClient2)
+            }
+            return Promise.resolve(mockMatrixClient)
+          })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId: handleId1,
+          recipient,
+          name: listenerName,
+          listener: listener1,
+        })
+        await expect(
+          instanceUnderTest.messaging.registerMessageListener({
+            handleId: handleId2,
+            recipient,
+            name: listenerName,
+            listener: listener2,
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient1.registerEventListener).toHaveBeenCalledTimes(1)
+        expect(mockMatrixClient2.registerEventListener).toHaveBeenCalledTimes(1)
+      })
+
+      it('does not throw when registering duplicate listener with same name', async () => {
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: listenerName,
+          listener: mockListener,
+        })
+        await expect(
+          instanceUnderTest.messaging.registerMessageListener({
+            handleId,
+            recipient,
+            name: listenerName,
+            listener: mockListener,
+          }),
+        ).resolves.not.toThrow()
+      })
+
+      it('only registers client listener once per handle', async () => {
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener1',
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener2',
+          listener: listener2,
+        })
+        expect(mockMatrixClient.registerEventListener).toHaveBeenCalledTimes(1)
+      })
+    })
+    describe('unregisterMessageListener', () => {
+      const handleId = new HandleId('testHandleId')
+      const recipient = new HandleId('testRecipientId')
+      const listenerName = 'testListener'
+      const mockListener = jest.fn()
+      const mockMatrixClient = {
+        registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+        unregisterEventListener: jest.fn(),
+      } as any
+
+      beforeEach(() => {
+        mockListener.mockClear()
+        mockMatrixClient.registerEventListener.mockClear()
+        mockMatrixClient.unregisterEventListener.mockClear()
+        const messagingModule = instanceUnderTest.messaging as any
+        jest
+          .spyOn(messagingModule.sessionManager, 'getMatrixClient')
+          .mockResolvedValue(mockMatrixClient)
+      })
+
+      afterEach(() => {
+        jest.restoreAllMocks()
+      })
+
+      it('unregisters a message listener successfully', async () => {
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: listenerName,
+          listener: mockListener,
+        })
+        await expect(
+          instanceUnderTest.messaging.unregisterMessageListener({
+            handleId,
+            recipient,
+            name: listenerName,
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient.unregisterEventListener).toHaveBeenCalledTimes(
+          1,
+        )
+      })
+
+      it('allows unregistering a non-existent listener without error', async () => {
+        await expect(
+          instanceUnderTest.messaging.unregisterMessageListener({
+            handleId,
+            recipient,
+            name: 'nonExistentListener',
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient.unregisterEventListener).not.toHaveBeenCalled()
+      })
+
+      it('unregisters only the specified listener when multiple exist', async () => {
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener1',
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener2',
+          listener: listener2,
+        })
+        await instanceUnderTest.messaging.unregisterMessageListener({
+          handleId,
+          recipient,
+          name: 'listener1',
+        })
+        expect(mockMatrixClient.unregisterEventListener).not.toHaveBeenCalled()
+        await expect(
+          instanceUnderTest.messaging.unregisterMessageListener({
+            handleId,
+            recipient,
+            name: 'listener2',
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient.unregisterEventListener).toHaveBeenCalledTimes(
+          1,
+        )
+      })
+
+      it('cleans up recipient map when last listener for recipient is removed', async () => {
+        const recipient1 = new HandleId('recipient1')
+        const recipient2 = new HandleId('recipient2')
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient1,
+          name: listenerName,
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient2,
+          name: listenerName,
+          listener: listener2,
+        })
+        await instanceUnderTest.messaging.unregisterMessageListener({
+          handleId,
+          recipient: recipient1,
+          name: listenerName,
+        })
+        expect(mockMatrixClient.unregisterEventListener).not.toHaveBeenCalled()
+        await expect(
+          instanceUnderTest.messaging.registerMessageListener({
+            handleId,
+            recipient: recipient1,
+            name: 'newListener',
+            listener: jest.fn(),
+          }),
+        ).resolves.not.toThrow()
+      })
+
+      it('cleans up handle map and unregisters client listener when last listener for handle is removed', async () => {
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: listenerName,
+          listener: mockListener,
+        })
+        await instanceUnderTest.messaging.unregisterMessageListener({
+          handleId,
+          recipient,
+          name: listenerName,
+        })
+        expect(mockMatrixClient.unregisterEventListener).toHaveBeenCalledTimes(
+          1,
+        )
+        await expect(
+          instanceUnderTest.messaging.registerMessageListener({
+            handleId,
+            recipient,
+            name: 'newListener',
+            listener: jest.fn(),
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient.registerEventListener).toHaveBeenCalledTimes(2)
+      })
+
+      it('handles unregistering from different recipients independently', async () => {
+        const recipient1 = new HandleId('recipient1')
+        const recipient2 = new HandleId('recipient2')
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient1,
+          name: listenerName,
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient2,
+          name: listenerName,
+          listener: listener2,
+        })
+        await instanceUnderTest.messaging.unregisterMessageListener({
+          handleId,
+          recipient: recipient1,
+          name: listenerName,
+        })
+        await expect(
+          instanceUnderTest.messaging.unregisterMessageListener({
+            handleId,
+            recipient: recipient2,
+            name: listenerName,
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient.unregisterEventListener).toHaveBeenCalledTimes(
+          1,
+        )
+      })
+
+      it('handles unregistering from different handles independently', async () => {
+        const handleId1 = new HandleId('handle1')
+        const handleId2 = new HandleId('handle2')
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        const mockMatrixClient1 = {
+          registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+          unregisterEventListener: jest.fn(),
+        } as any
+        const mockMatrixClient2 = {
+          registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+          unregisterEventListener: jest.fn(),
+        } as any
+        const messagingModule = instanceUnderTest.messaging as any
+        jest
+          .spyOn(messagingModule.sessionManager, 'getMatrixClient')
+          .mockImplementation((...args: unknown[]) => {
+            const handleId = args[0] as HandleId
+            if (handleId.toString() === handleId1.toString()) {
+              return Promise.resolve(mockMatrixClient1)
+            }
+            if (handleId.toString() === handleId2.toString()) {
+              return Promise.resolve(mockMatrixClient2)
+            }
+            return Promise.resolve(mockMatrixClient)
+          })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId: handleId1,
+          recipient,
+          name: listenerName,
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId: handleId2,
+          recipient,
+          name: listenerName,
+          listener: listener2,
+        })
+        await instanceUnderTest.messaging.unregisterMessageListener({
+          handleId: handleId1,
+          recipient,
+          name: listenerName,
+        })
+        expect(mockMatrixClient1.unregisterEventListener).toHaveBeenCalledTimes(
+          1,
+        )
+        await expect(
+          instanceUnderTest.messaging.unregisterMessageListener({
+            handleId: handleId2,
+            recipient,
+            name: listenerName,
+          }),
+        ).resolves.not.toThrow()
+        expect(mockMatrixClient2.unregisterEventListener).toHaveBeenCalledTimes(
+          1,
+        )
+      })
+    })
+    describe('getHandleMessageListener', () => {
+      const handleId = new HandleId('testHandleId')
+      const roomId = '!room123:matrix.org'
+      const recipient = new GroupId(roomId)
+      const mockMessage: Message = {
+        messageId: 'msg123',
+        state: MessageState.COMMITTED,
+        timestamp: Date.now(),
+        senderHandle: {
+          handleId: new HandleId('senderId'),
+          name: 'Sender',
+        },
+        isOwn: false,
+        content: {
+          type: 'm.text',
+          body: 'Test message',
+          isEdited: false,
+        },
+        reactions: [],
+        receipts: [],
+      }
+
+      beforeEach(() => {
+        const messagingModule = instanceUnderTest.messaging as any
+        jest
+          .spyOn(messagingModule.sessionManager, 'getMatrixClient')
+          .mockResolvedValue({
+            registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+          })
+      })
+
+      afterEach(() => {
+        jest.restoreAllMocks()
+      })
+
+      it('calls all registered listeners for a handle and recipient', async () => {
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener1',
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener2',
+          listener: listener2,
+        })
+        const messagingModule = instanceUnderTest.messaging as any
+        const handleListener =
+          messagingModule.getHandleMessageListener(handleId)
+        handleListener(mockMessage, roomId)
+        expect(listener1).toHaveBeenCalledTimes(1)
+        expect(listener1).toHaveBeenCalledWith(mockMessage)
+        expect(listener2).toHaveBeenCalledTimes(1)
+        expect(listener2).toHaveBeenCalledWith(mockMessage)
+      })
+
+      it('does not call listeners for different recipients', async () => {
+        const recipient1 = new HandleId('recipient1')
+        const recipient2 = new HandleId('recipient2')
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient1,
+          name: 'listener1',
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient2,
+          name: 'listener2',
+          listener: listener2,
+        })
+        const messagingModule = instanceUnderTest.messaging as any
+        const handleListener =
+          messagingModule.getHandleMessageListener(handleId)
+        const roomId1 = recipient1.value
+        handleListener(mockMessage, roomId1)
+        expect(listener1).toHaveBeenCalledTimes(1)
+        expect(listener1).toHaveBeenCalledWith(mockMessage)
+        expect(listener2).not.toHaveBeenCalled()
+      })
+
+      it('handles case when handle has no listeners gracefully', () => {
+        const messagingModule = instanceUnderTest.messaging as any
+        const handleListener =
+          messagingModule.getHandleMessageListener(handleId)
+        expect(() => {
+          handleListener(mockMessage, roomId)
+        }).not.toThrow()
+      })
+
+      it('handles case when recipient has no listeners gracefully', async () => {
+        const recipient1 = new HandleId('recipient1')
+        const listener1 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient: recipient1,
+          name: 'listener1',
+          listener: listener1,
+        })
+        const messagingModule = instanceUnderTest.messaging as any
+        const handleListener =
+          messagingModule.getHandleMessageListener(handleId)
+        const differentRoomId = '!differentRoom:matrix.org'
+        expect(() => {
+          handleListener(mockMessage, differentRoomId)
+        }).not.toThrow()
+        expect(listener1).not.toHaveBeenCalled()
+      })
+
+      it('handles errors thrown by listeners gracefully', async () => {
+        const errorListener = jest.fn(() => {
+          throw new Error('Listener error')
+        })
+        const normalListener = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'errorListener',
+          listener: errorListener,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'normalListener',
+          listener: normalListener,
+        })
+        const messagingModule = instanceUnderTest.messaging as any
+        const handleListener =
+          messagingModule.getHandleMessageListener(handleId)
+        expect(() => {
+          handleListener(mockMessage, roomId)
+        }).not.toThrow()
+        expect(errorListener).toHaveBeenCalledTimes(1)
+        expect(normalListener).toHaveBeenCalledTimes(1)
+        expect(normalListener).toHaveBeenCalledWith(mockMessage)
+      })
+
+      it('calls listeners with the correct message for different handles', async () => {
+        const handleId1 = new HandleId('handle1')
+        const handleId2 = new HandleId('handle2')
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        const message1: Message = { ...mockMessage, messageId: 'msg1' }
+        const message2: Message = { ...mockMessage, messageId: 'msg2' }
+        const mockMatrixClient1 = {
+          registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+        } as any
+        const mockMatrixClient2 = {
+          registerEventListener: jest.fn().mockReturnValue(jest.fn()),
+        } as any
+        const messagingModule = instanceUnderTest.messaging as any
+        jest
+          .spyOn(messagingModule.sessionManager, 'getMatrixClient')
+          .mockImplementation((...args: unknown[]) => {
+            const handleId = args[0] as HandleId
+            if (handleId.toString() === handleId1.toString()) {
+              return Promise.resolve(mockMatrixClient1)
+            }
+            if (handleId.toString() === handleId2.toString()) {
+              return Promise.resolve(mockMatrixClient2)
+            }
+            return Promise.resolve(mockMatrixClient1)
+          })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId: handleId1,
+          recipient,
+          name: 'listener1',
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId: handleId2,
+          recipient,
+          name: 'listener2',
+          listener: listener2,
+        })
+        const handleListener1 =
+          messagingModule.getHandleMessageListener(handleId1)
+        const handleListener2 =
+          messagingModule.getHandleMessageListener(handleId2)
+        handleListener1(message1, roomId)
+        handleListener2(message2, roomId)
+        expect(listener1).toHaveBeenCalledTimes(1)
+        expect(listener1).toHaveBeenCalledWith(message1)
+        expect(listener2).toHaveBeenCalledTimes(1)
+        expect(listener2).toHaveBeenCalledWith(message2)
+      })
+
+      it('calls all listeners even if some are unregistered', async () => {
+        const listener1 = jest.fn()
+        const listener2 = jest.fn()
+        const listener3 = jest.fn()
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener1',
+          listener: listener1,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener2',
+          listener: listener2,
+        })
+        await instanceUnderTest.messaging.registerMessageListener({
+          handleId,
+          recipient,
+          name: 'listener3',
+          listener: listener3,
+        })
+        const messagingModule = instanceUnderTest.messaging as any
+        const handleListener =
+          messagingModule.getHandleMessageListener(handleId)
+        await instanceUnderTest.messaging.unregisterMessageListener({
+          handleId,
+          recipient,
+          name: 'listener2',
+        })
+        handleListener(mockMessage, roomId)
+        expect(listener1).toHaveBeenCalledTimes(1)
+        expect(listener1).toHaveBeenCalledWith(mockMessage)
+        expect(listener2).not.toHaveBeenCalled()
+        expect(listener3).toHaveBeenCalledTimes(1)
+        expect(listener3).toHaveBeenCalledWith(mockMessage)
       })
     })
   })

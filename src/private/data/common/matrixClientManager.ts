@@ -65,6 +65,7 @@ import {
   UnauthorizedError,
 } from '../../../public'
 import { HandleStorage } from '../../../public/modules/storageModule'
+import { Message } from '../../../public/typings'
 import { PowerLevelsEntity } from '../../domain/entities/common/powerLevelsEntity'
 import {
   DirectChatPermissionsEntity,
@@ -2328,6 +2329,50 @@ export class MatrixClientManager {
       this.log.error(msg, { err })
       throw new SecureCommsError(msg)
     }
+  }
+
+  // MARK: Event Listener
+
+  public registerEventListener(
+    listener: (message: Message, roomId: string) => void,
+  ): (event: MatrixEvent) => void {
+    const messageTransformer = new MessageTransformer()
+    const eventListener = async (event: MatrixEvent) => {
+      if (
+        [EventType.RoomMessage, EventType.PollStart].includes(
+          event.getType() as EventType,
+        )
+      ) {
+        try {
+          const userId = await this.getUserId()
+          const messageEntity = messageTransformer.fromMatrixToEntity(
+            userId,
+            event,
+          )
+          if (!messageEntity) return
+          const roomId = event.getRoomId()
+          if (!roomId) return
+          const room = await this.getRoom(roomId)
+          if (!room) return
+          messageEntity.senderHandle.name =
+            room.getMember(messageEntity.senderHandle.handleId.toString())
+              ?.name ?? ''
+          const message = messageTransformer.fromEntityToAPI(messageEntity)
+          listener(message, roomId)
+        } catch (err) {
+          this.log.error('Error transforming event to message', {
+            err,
+            eventId: event.getId(),
+          })
+        }
+      }
+    }
+    this.client.on('event' as any, eventListener)
+    return eventListener
+  }
+
+  public unregisterEventListener(listener: (event: MatrixEvent) => void): void {
+    this.client.removeListener('event' as any, listener)
   }
 
   // MARK: Util

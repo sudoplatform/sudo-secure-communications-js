@@ -372,6 +372,36 @@ export interface GetPollResponsesInput {
 }
 
 /**
+ * Properties required to register a timeline listener.
+ *
+ * @interface RegisterEventListenerInput
+ * @property {HandleId} handleId The identifier of the handle owned by this client.
+ * @property {Recipient} recipient The target recipient.
+ * @property {string} name The name of the listener.
+ * @property {TimelineListener} listener The listener to register.
+ */
+export interface RegisterMessageListenerInput {
+  handleId: HandleId
+  recipient: Recipient
+  name: string
+  listener: (message: Message) => void
+}
+
+/**
+ * Properties required to unregister a timeline listener.
+ *
+ * @interface UnregisterTimelineListenerInput
+ * @property {HandleId} handleId The identifier of the handle owned by this client.
+ * @property {Recipient} recipient The target recipient.
+ * @property {string} name The name of the listener to unregister.
+ */
+export interface UnregisterMessageListenerInput {
+  handleId: HandleId
+  recipient: Recipient
+  name: string
+}
+
+/**
  * Messaging management for the Secure Communications Service.
  *
  * Each method on this interface takes an input which includes a {@link Recipient} parameter
@@ -522,10 +552,46 @@ export interface MessagingModule {
    * @returns {PollResponses} The tallied responses for the poll.
    */
   getPollResponses(input: GetPollResponsesInput): Promise<PollResponses>
+
+  /**
+   * Registers a message listener.
+   *
+   * @param {RegisterMessageListenerInput} input Parameters used to register a message listener.
+   */
+  registerMessageListener(input: RegisterMessageListenerInput): Promise<void>
+
+  /**
+   * Unregisters a message listener.
+   *
+   * @param {UnregisterMessageListenerInput} input Parameters used to unregister a message listener.
+   */
+  unregisterMessageListener(
+    input: UnregisterMessageListenerInput,
+  ): Promise<void>
 }
 
 export class DefaultMessagingModule implements MessagingModule {
   private readonly log: Logger
+
+  /*
+    A map for client app registered message listeners for each handle and each recipient
+    Structure:
+
+      HandleId: {
+        RoomId: {
+          ListenerName: (message: Message) => void
+        },
+        ...
+      }
+  */
+  private messageListeners: Map<
+    HandleId,
+    Map<string, Map<string, (message: Message) => void>>
+  > = new Map()
+
+  // A map of matrix client event listeners for each handle
+  // Stores the internal listener function returned from registerEventListener, for use in unregisterEventListener
+  private matrixEventListeners: Map<HandleId, (event: any) => void> = new Map()
 
   public constructor(
     private readonly sessionManager: SessionManager,
@@ -801,5 +867,70 @@ export class DefaultMessagingModule implements MessagingModule {
     const result = await useCase.execute(input)
     const transformer = new PollResponsesTransformer()
     return transformer.fromEntityToAPI(result)
+  }
+
+  async registerMessageListener(
+    input: RegisterMessageListenerInput,
+  ): Promise<void> {
+    const recipientMap =
+      this.messageListeners.get(input.handleId) ??
+      this.messageListeners.set(input.handleId, new Map()).get(input.handleId)!
+    const listenerMap =
+      recipientMap.get(input.recipient.value) ??
+      recipientMap
+        .set(input.recipient.value, new Map())
+        .get(input.recipient.value)!
+    if (!listenerMap.has(input.name)) {
+      listenerMap.set(input.name, input.listener)
+    }
+    if (!this.matrixEventListeners.has(input.handleId)) {
+      const client = await this.sessionManager.getMatrixClient(input.handleId)
+      const messageListener = this.getHandleMessageListener(input.handleId)
+      const matrixEventListener = client.registerEventListener(messageListener)
+      this.matrixEventListeners.set(input.handleId, matrixEventListener)
+    }
+  }
+
+  async unregisterMessageListener(
+    input: UnregisterMessageListenerInput,
+  ): Promise<void> {
+    const recipientMap = this.messageListeners.get(input.handleId)
+    const listenerMap = recipientMap?.get(input.recipient.value)
+    if (listenerMap?.has(input.name)) {
+      listenerMap.delete(input.name)
+      if (listenerMap.size === 0) {
+        recipientMap?.delete(input.recipient.value)
+      }
+      if (recipientMap && recipientMap.size === 0) {
+        const client = await this.sessionManager.getMatrixClient(input.handleId)
+        const matrixEventListener = this.matrixEventListeners.get(
+          input.handleId,
+        )
+        if (matrixEventListener) {
+          client.unregisterEventListener(matrixEventListener)
+          this.matrixEventListeners.delete(input.handleId)
+        }
+        this.messageListeners.delete(input.handleId)
+      }
+    }
+  }
+
+  private getHandleMessageListener(
+    handleId: HandleId,
+  ): (message: Message, roomId: string) => void {
+    const listener = (message: Message, roomId: string) => {
+      const handleListeners = this.messageListeners.get(handleId)
+      if (!handleListeners) return
+      const recipientListeners = handleListeners.get(roomId)
+      if (!recipientListeners) return
+      recipientListeners.forEach((listener) => {
+        try {
+          listener(message)
+        } catch (err) {
+          this.log.error('Error in timeline listener', { err, handleId })
+        }
+      })
+    }
+    return listener
   }
 }

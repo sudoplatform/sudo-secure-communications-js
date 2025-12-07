@@ -13,11 +13,13 @@ import {
   ChannelId,
   ChannelJoinRule,
   ChannelRole,
+  DeleteOwnRedactReason,
   MembershipState,
   Message,
   MessageState,
   OwnedHandle,
   PollType,
+  RedactedMessage,
   SecureCommsClient,
 } from '../../src/public'
 import { APIDataFactory } from '../data-factory/api'
@@ -94,308 +96,424 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
   })
 
   describe('Send Messages in Channel', () => {
-    it('send and retrieve messages between two handles in a channel successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
-      inviterHandle = await client1.handles.provisionHandle({
-        name: inviterHandleName,
-      })
-      await client1.startSyncing(inviterHandle.handleId)
+    describe('sendMessage, getMessages and searchMessages', () => {
+      it('send and retrieve messages between two handles in a channel successfully', async () => {
+        const inviterHandleName = `test_inviter_handle_${v4()}`
+        inviterHandle = await client1.handles.provisionHandle({
+          name: inviterHandleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
-      inviteeHandle = await client2.handles.provisionHandle({
-        name: inviteeHandleName,
-      })
-      await client2.startSyncing(inviteeHandle.handleId)
+        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        inviteeHandle = await client2.handles.provisionHandle({
+          name: inviteeHandleName,
+        })
+        await client2.startSyncing(inviteeHandle.handleId)
 
-      const name = `channel-${v4()}`
-      const description = 'channel-description'
-      const tags = ['tag-1', 'tag-2']
-      const channel = await client1.channels.createChannel({
-        handleId: inviterHandle.handleId,
-        name,
-        description,
-        joinRule: ChannelJoinRule.PUBLIC,
-        tags,
-        invitedHandleIds: [],
-        permissions: APIDataFactory.defaultChannelPermissionsInput,
-        defaultMemberRole: ChannelRole.REACT_ONLY_PARTICIPANT,
-      })
-      expect(channel).toBeDefined()
-      channelIdsToCleanup.push(channel.channelId)
+        const name = `channel-${v4()}`
+        const description = 'channel-description'
+        const tags = ['tag-1', 'tag-2']
+        const channel = await client1.channels.createChannel({
+          handleId: inviterHandle.handleId,
+          name,
+          description,
+          joinRule: ChannelJoinRule.PUBLIC,
+          tags,
+          invitedHandleIds: [],
+          permissions: APIDataFactory.defaultChannelPermissionsInput,
+          defaultMemberRole: ChannelRole.REACT_ONLY_PARTICIPANT,
+        })
+        expect(channel).toBeDefined()
+        channelIdsToCleanup.push(channel.channelId)
 
-      // Inviter handle sends invitation to invitee handle
-      await client1.channels.sendInvitations({
-        handleId: inviterHandle.handleId,
-        channelId: channel.channelId,
-        targetHandleIds: [inviteeHandle.handleId],
-      })
+        // Inviter handle sends invitation to invitee handle
+        await client1.channels.sendInvitations({
+          handleId: inviterHandle.handleId,
+          channelId: channel.channelId,
+          targetHandleIds: [inviteeHandle.handleId],
+        })
 
-      // Check if the inviter handle is joined to the channel
-      await isHandleExpectedMembershipInChannel(
-        client1,
-        inviterHandle.handleId,
-        channel.channelId,
-        inviterHandle.handleId,
-        MembershipState.JOINED,
-      )
+        // Check if the inviter handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client1,
+          inviterHandle.handleId,
+          channel.channelId,
+          inviterHandle.handleId,
+          MembershipState.JOINED,
+        )
 
-      // Invitee handle accepts the invitation from the inviter handle
-      await client2.channels.acceptInvitation({
-        handleId: inviteeHandle.handleId,
-        channelId: channel.channelId,
-      })
+        // Invitee handle accepts the invitation from the inviter handle
+        await client2.channels.acceptInvitation({
+          handleId: inviteeHandle.handleId,
+          channelId: channel.channelId,
+        })
 
-      // Check if the invitee handle is joined to the channel
-      await isHandleExpectedMembershipInChannel(
-        client2,
-        inviteeHandle.handleId,
-        channel.channelId,
-        inviteeHandle.handleId,
-        MembershipState.JOINED,
-      )
+        // Check if the invitee handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client2,
+          inviteeHandle.handleId,
+          channel.channelId,
+          inviteeHandle.handleId,
+          MembershipState.JOINED,
+        )
 
-      // Send a message from inviter to invitee in the channel
-      const message = 'This is a message from inviter to invitee in a channel'
-      await client1.messaging.sendMessage({
-        handleId: inviterHandle.handleId,
-        recipient: channel.channelId,
-        message,
-        mentions: [],
-      })
-
-      // Allow some time to sync messages
-      await delay(5000)
-
-      // Retrieve messages for the inviter
-      const inviterMessages: Message[] = []
-      let inviterNextToken: string | undefined = undefined
-      do {
-        const messages = await client1.messaging.getMessages({
+        // Send a message from inviter to invitee in the channel
+        const message = 'This is a message from inviter to invitee in a channel'
+        await client1.messaging.sendMessage({
           handleId: inviterHandle.handleId,
           recipient: channel.channelId,
-          limit: 20,
-          nextToken: inviterNextToken,
+          message,
+          mentions: [],
         })
-        inviterMessages.push(...messages.items)
-        inviterNextToken = messages.nextToken
-      } while (inviterNextToken)
-      const inviterIdx = inviterMessages.length - 1
-      expect(inviterMessages.length).toEqual(4)
-      expect(
-        inviterMessages[inviterIdx].senderHandle.handleId.toString(),
-      ).toEqual(expect.stringContaining(inviterHandle.handleId.toString()))
-      expect(inviterMessages[inviterIdx].state).toEqual(MessageState.COMMITTED)
-      expect(inviterMessages[inviterIdx].isOwn).toBeTruthy()
-      expect(inviterMessages[inviterIdx].content).toEqual({
-        type: 'm.text',
-        text: message,
-        isEdited: false,
+
+        // Allow some time to sync messages
+        await delay(5000)
+
+        // Retrieve messages for the inviter
+        const inviterMessages: Message[] = []
+        let inviterNextToken: string | undefined = undefined
+        do {
+          const messages = await client1.messaging.getMessages({
+            handleId: inviterHandle.handleId,
+            recipient: channel.channelId,
+            limit: 20,
+            nextToken: inviterNextToken,
+          })
+          inviterMessages.push(...messages.items)
+          inviterNextToken = messages.nextToken
+        } while (inviterNextToken)
+        const inviterIdx = inviterMessages.length - 1
+        expect(inviterMessages.length).toEqual(4)
+        expect(
+          inviterMessages[inviterIdx].senderHandle.handleId.toString(),
+        ).toEqual(expect.stringContaining(inviterHandle.handleId.toString()))
+        expect(inviterMessages[inviterIdx].state).toEqual(
+          MessageState.COMMITTED,
+        )
+        expect(inviterMessages[inviterIdx].isOwn).toBeTruthy()
+        expect(inviterMessages[inviterIdx].content).toEqual({
+          type: 'm.text',
+          text: message,
+          isEdited: false,
+        })
+
+        // Retrieve messages for the invitee
+        const inviteeMessages: Message[] = []
+        let inviteeNextToken: string | undefined = undefined
+        do {
+          const messages = await client2.messaging.getMessages({
+            handleId: inviteeHandle.handleId,
+            recipient: channel.channelId,
+            nextToken: inviteeNextToken,
+          })
+          inviteeMessages.push(...messages.items)
+          inviteeNextToken = messages.nextToken
+        } while (inviteeNextToken)
+        inviteeMessages.sort((a, b) => a.timestamp - b.timestamp)
+        const inviteeIdx = inviteeMessages.length - 1
+        expect(inviteeMessages.length).toEqual(4)
+        expect(
+          inviteeMessages[inviteeIdx].senderHandle.handleId.toString(),
+        ).toEqual(expect.stringContaining(inviterHandle.handleId.toString()))
+        expect(inviteeMessages[inviteeIdx].state).toEqual(
+          MessageState.COMMITTED,
+        )
+        expect(inviteeMessages[inviteeIdx].isOwn).toBeFalsy()
+        expect(inviteeMessages[inviteeIdx].content).toEqual({
+          type: 'm.text',
+          text: message,
+          isEdited: false,
+        })
       })
 
-      // Retrieve messages for the invitee
-      const inviteeMessages: Message[] = []
-      let inviteeNextToken: string | undefined = undefined
-      do {
-        const messages = await client2.messaging.getMessages({
+      it('send and retrieve multiple messages between two handles in a channel successfully', async () => {
+        const inviterHandleName = `test_inviter_handle_${v4()}`
+        inviterHandle = await client1.handles.provisionHandle({
+          name: inviterHandleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
+
+        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        inviteeHandle = await client2.handles.provisionHandle({
+          name: inviteeHandleName,
+        })
+        await client2.startSyncing(inviteeHandle.handleId)
+
+        const name = `channel-${v4()}`
+        const description = 'channel-description'
+        const tags = ['tag-1', 'tag-2']
+        const channel = await client1.channels.createChannel({
+          handleId: inviterHandle.handleId,
+          name,
+          description,
+          joinRule: ChannelJoinRule.PUBLIC,
+          tags,
+          invitedHandleIds: [],
+          permissions: APIDataFactory.defaultChannelPermissionsInput,
+          defaultMemberRole: ChannelRole.PARTICIPANT,
+        })
+        expect(channel).toBeDefined()
+        channelIdsToCleanup.push(channel.channelId)
+
+        await delay(5000)
+
+        // Inviter handle sends invitation to invitee handle
+        await client1.channels.sendInvitations({
+          handleId: inviterHandle.handleId,
+          channelId: channel.channelId,
+          targetHandleIds: [inviteeHandle.handleId],
+        })
+
+        // Check if the inviter handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client1,
+          inviterHandle.handleId,
+          channel.channelId,
+          inviterHandle.handleId,
+          MembershipState.JOINED,
+        )
+
+        // Invitee handle accepts the invitation from the inviter handle
+        await client2.channels.acceptInvitation({
+          handleId: inviteeHandle.handleId,
+          channelId: channel.channelId,
+        })
+
+        await delay(5000)
+
+        // Check if the invitee handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client2,
+          inviteeHandle.handleId,
+          channel.channelId,
+          inviteeHandle.handleId,
+          MembershipState.JOINED,
+        )
+
+        // Send a message from inviter to invitee in the channel
+        let message = 'This is a message from inviter to invitee in a channel'
+        await client1.messaging.sendMessage({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+          message,
+          mentions: [],
+        })
+
+        // Send a message from invitee to inviter in the channel
+        message = 'Hey inviter, this is invitee responding to you'
+        await client2.messaging.sendMessage({
           handleId: inviteeHandle.handleId,
           recipient: channel.channelId,
-          nextToken: inviteeNextToken,
+          message,
+          mentions: [],
         })
-        inviteeMessages.push(...messages.items)
-        inviteeNextToken = messages.nextToken
-      } while (inviteeNextToken)
-      inviteeMessages.sort((a, b) => a.timestamp - b.timestamp)
-      const inviteeIdx = inviteeMessages.length - 1
-      expect(inviteeMessages.length).toEqual(4)
-      expect(
-        inviteeMessages[inviteeIdx].senderHandle.handleId.toString(),
-      ).toEqual(expect.stringContaining(inviterHandle.handleId.toString()))
-      expect(inviteeMessages[inviteeIdx].state).toEqual(MessageState.COMMITTED)
-      expect(inviteeMessages[inviteeIdx].isOwn).toBeFalsy()
-      expect(inviteeMessages[inviteeIdx].content).toEqual({
-        type: 'm.text',
-        text: message,
-        isEdited: false,
+
+        // Send another message from invitee to inviter in the channel
+        message = 'Inviter?, this is invitee, are you there?'
+        await client2.messaging.sendMessage({
+          handleId: inviteeHandle.handleId,
+          recipient: channel.channelId,
+          message,
+          mentions: [],
+        })
+
+        // Send a message from inviter to invitee in the channel
+        message = 'Hey invitee, I am here!'
+        await client1.messaging.sendMessage({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+          message,
+          mentions: [],
+        })
+
+        // Send another message from inviter to invitee in the channel
+        message = 'Invitee? I am trying to respond to you.'
+        await client1.messaging.sendMessage({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+          message,
+          mentions: [],
+        })
+
+        // Send final message from invitee to inviter in the channel
+        message = 'Yes! Responding to you now inviter.'
+        await client2.messaging.sendMessage({
+          handleId: inviteeHandle.handleId,
+          recipient: channel.channelId,
+          message,
+          mentions: [],
+        })
+
+        // Allow some time to sync messages
+        await delay(5000)
+
+        // Retrieve messages for the inviter
+        const inviterMessages: Message[] = []
+        let inviterNextToken: string | undefined = undefined
+        do {
+          const messages = await client1.messaging.getMessages({
+            handleId: inviterHandle.handleId,
+            recipient: channel.channelId,
+            limit: 20,
+            nextToken: inviterNextToken,
+          })
+          inviterMessages.push(...messages.items)
+          inviterNextToken = messages.nextToken
+        } while (inviterNextToken)
+        // Includes messages sent and membership state change messages
+        const inviterTextMsgs = inviterMessages.filter(
+          (item) => item.content.type === 'm.text',
+        )
+        expect(inviterTextMsgs.length).toEqual(6)
+        expect(
+          inviterMessages.every((item, index, arr) => {
+            if (index === 0) return true
+            return item.timestamp >= arr[index - 1].timestamp
+          }),
+        ).toBe(true)
+
+        // Retrieve messages for the invitee
+        const inviteeMessages: Message[] = []
+        let inviteeNextToken: string | undefined = undefined
+        do {
+          const messages = await client2.messaging.getMessages({
+            handleId: inviteeHandle.handleId,
+            recipient: channel.channelId,
+            limit: 20,
+            nextToken: inviteeNextToken,
+          })
+          inviteeMessages.push(...messages.items)
+          inviteeNextToken = messages.nextToken
+        } while (inviteeNextToken)
+        // Includes messages sent and membership state change messages
+        const inviteeTextMsgs = inviteeMessages.filter(
+          (item) => item.content.type === 'm.text',
+        )
+        expect(inviteeTextMsgs.length).toEqual(6)
+        expect(
+          inviteeMessages.every((item, index, arr) => {
+            if (index === 0) return true
+            return item.timestamp >= arr[index - 1].timestamp
+          }),
+        ).toBe(true)
+
+        // Search messages based on the search term 'invitee'
+        let searchResult = await client1.messaging.searchMessages({
+          handleId: inviterHandle.handleId,
+          searchText: 'invitee',
+        })
+        expect(searchResult.items.length).toEqual(5)
       })
     })
 
-    it('send and retrieve multiple messages between two handles in a channel successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
-      inviterHandle = await client1.handles.provisionHandle({
-        name: inviterHandleName,
-      })
-      await client1.startSyncing(inviterHandle.handleId)
+    describe('deleteMessage', () => {
+      it('send and delete messages in a channel successfully', async () => {
+        const inviterHandleName = `test_inviter_handle_${v4()}`
+        inviterHandle = await client1.handles.provisionHandle({
+          name: inviterHandleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
-      inviteeHandle = await client2.handles.provisionHandle({
-        name: inviteeHandleName,
-      })
-      await client2.startSyncing(inviteeHandle.handleId)
+        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        inviteeHandle = await client2.handles.provisionHandle({
+          name: inviteeHandleName,
+        })
+        await client2.startSyncing(inviteeHandle.handleId)
 
-      const name = `channel-${v4()}`
-      const description = 'channel-description'
-      const tags = ['tag-1', 'tag-2']
-      const channel = await client1.channels.createChannel({
-        handleId: inviterHandle.handleId,
-        name,
-        description,
-        joinRule: ChannelJoinRule.PUBLIC,
-        tags,
-        invitedHandleIds: [],
-        permissions: APIDataFactory.defaultChannelPermissionsInput,
-        defaultMemberRole: ChannelRole.PARTICIPANT,
-      })
-      expect(channel).toBeDefined()
-      channelIdsToCleanup.push(channel.channelId)
+        const name = `channel-${v4()}`
+        const description = 'channel-description'
+        const tags = ['tag-1', 'tag-2']
+        const channel = await client1.channels.createChannel({
+          handleId: inviterHandle.handleId,
+          name,
+          description,
+          joinRule: ChannelJoinRule.PUBLIC,
+          tags,
+          invitedHandleIds: [],
+          permissions: APIDataFactory.defaultChannelPermissionsInput,
+          defaultMemberRole: ChannelRole.REACT_ONLY_PARTICIPANT,
+        })
+        expect(channel).toBeDefined()
+        channelIdsToCleanup.push(channel.channelId)
 
-      await delay(5000)
+        // Inviter handle sends invitation to invitee handle
+        await client1.channels.sendInvitations({
+          handleId: inviterHandle.handleId,
+          channelId: channel.channelId,
+          targetHandleIds: [inviteeHandle.handleId],
+        })
 
-      // Inviter handle sends invitation to invitee handle
-      await client1.channels.sendInvitations({
-        handleId: inviterHandle.handleId,
-        channelId: channel.channelId,
-        targetHandleIds: [inviteeHandle.handleId],
-      })
+        // Check if the inviter handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client1,
+          inviterHandle.handleId,
+          channel.channelId,
+          inviterHandle.handleId,
+          MembershipState.JOINED,
+        )
 
-      // Check if the inviter handle is joined to the channel
-      await isHandleExpectedMembershipInChannel(
-        client1,
-        inviterHandle.handleId,
-        channel.channelId,
-        inviterHandle.handleId,
-        MembershipState.JOINED,
-      )
+        // Invitee handle accepts the invitation from the inviter handle
+        await client2.channels.acceptInvitation({
+          handleId: inviteeHandle.handleId,
+          channelId: channel.channelId,
+        })
 
-      // Invitee handle accepts the invitation from the inviter handle
-      await client2.channels.acceptInvitation({
-        handleId: inviteeHandle.handleId,
-        channelId: channel.channelId,
-      })
+        // Check if the invitee handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client2,
+          inviteeHandle.handleId,
+          channel.channelId,
+          inviteeHandle.handleId,
+          MembershipState.JOINED,
+        )
 
-      await delay(5000)
-
-      // Check if the invitee handle is joined to the channel
-      await isHandleExpectedMembershipInChannel(
-        client2,
-        inviteeHandle.handleId,
-        channel.channelId,
-        inviteeHandle.handleId,
-        MembershipState.JOINED,
-      )
-
-      // Send a message from inviter to invitee in the channel
-      let message = 'This is a message from inviter to invitee in a channel'
-      await client1.messaging.sendMessage({
-        handleId: inviterHandle.handleId,
-        recipient: channel.channelId,
-        message,
-        mentions: [],
-      })
-
-      // Send a message from invitee to inviter in the channel
-      message = 'Hey inviter, this is invitee responding to you'
-      await client2.messaging.sendMessage({
-        handleId: inviteeHandle.handleId,
-        recipient: channel.channelId,
-        message,
-        mentions: [],
-      })
-
-      // Send another message from invitee to inviter in the channel
-      message = 'Inviter?, this is invitee, are you there?'
-      await client2.messaging.sendMessage({
-        handleId: inviteeHandle.handleId,
-        recipient: channel.channelId,
-        message,
-        mentions: [],
-      })
-
-      // Send a message from inviter to invitee in the channel
-      message = 'Hey invitee, I am here!'
-      await client1.messaging.sendMessage({
-        handleId: inviterHandle.handleId,
-        recipient: channel.channelId,
-        message,
-        mentions: [],
-      })
-
-      // Send another message from inviter to invitee in the channel
-      message = 'Invitee? I am trying to respond to you.'
-      await client1.messaging.sendMessage({
-        handleId: inviterHandle.handleId,
-        recipient: channel.channelId,
-        message,
-        mentions: [],
-      })
-
-      // Send final message from invitee to inviter in the channel
-      message = 'Yes! Responding to you now inviter.'
-      await client2.messaging.sendMessage({
-        handleId: inviteeHandle.handleId,
-        recipient: channel.channelId,
-        message,
-        mentions: [],
-      })
-
-      // Allow some time to sync messages
-      await delay(5000)
-
-      // Retrieve messages for the inviter
-      const inviterMessages: Message[] = []
-      let inviterNextToken: string | undefined = undefined
-      do {
-        const messages = await client1.messaging.getMessages({
+        // Send a message from inviter to invitee in the channel
+        const message = 'This is a message from inviter to invitee in a channel'
+        await client1.messaging.sendMessage({
           handleId: inviterHandle.handleId,
           recipient: channel.channelId,
-          limit: 20,
-          nextToken: inviterNextToken,
+          message,
+          mentions: [],
         })
-        inviterMessages.push(...messages.items)
-        inviterNextToken = messages.nextToken
-      } while (inviterNextToken)
-      // Includes messages sent and membership state change messages
-      const inviterTextMsgs = inviterMessages.filter(
-        (item) => item.content.type === 'm.text',
-      )
-      expect(inviterTextMsgs.length).toEqual(6)
-      expect(
-        inviterMessages.every((item, index, arr) => {
-          if (index === 0) return true
-          return item.timestamp >= arr[index - 1].timestamp
-        }),
-      ).toBe(true)
 
-      // Retrieve messages for the invitee
-      const inviteeMessages: Message[] = []
-      let inviteeNextToken: string | undefined = undefined
-      do {
-        const messages = await client2.messaging.getMessages({
-          handleId: inviteeHandle.handleId,
+        // Allow some time to sync messages
+        await delay(5000)
+
+        // Retrieve text messages for the inviter
+        let inviterMessages = await client1.messaging.getMessages({
+          handleId: inviterHandle.handleId,
           recipient: channel.channelId,
-          limit: 20,
-          nextToken: inviteeNextToken,
         })
-        inviteeMessages.push(...messages.items)
-        inviteeNextToken = messages.nextToken
-      } while (inviteeNextToken)
-      // Includes messages sent and membership state change messages
-      const inviteeTextMsgs = inviteeMessages.filter(
-        (item) => item.content.type === 'm.text',
-      )
-      expect(inviteeTextMsgs.length).toEqual(6)
-      expect(
-        inviteeMessages.every((item, index, arr) => {
-          if (index === 0) return true
-          return item.timestamp >= arr[index - 1].timestamp
-        }),
-      ).toBe(true)
+        const inviterTextMsgs = inviterMessages.items.filter(
+          (item) => item.content.type === 'm.text',
+        )
+        expect(inviterTextMsgs.length).toEqual(1)
 
-      // Search messages based on the search term 'invitee'
-      let searchResult = await client1.messaging.searchMessages({
-        handleId: inviterHandle.handleId,
-        searchText: 'invitee',
+        // Inviter deletes their own message
+        await client1.messaging.deleteMessage({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+          messageId: inviterTextMsgs[0].messageId,
+          reason: { type: 'deleteOwn' } as DeleteOwnRedactReason,
+        })
+
+        // Check for redacted message amongst retrieved messages for the inviter
+        inviterMessages = await client1.messaging.getMessages({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+        })
+        const inviterRedactedMsg = inviterMessages.items.at(-1)
+        expect(inviterRedactedMsg?.content).toEqual(
+          expect.objectContaining({
+            redactedBecause: expect.objectContaining({
+              type: 'm.room.redaction',
+              content: expect.objectContaining({
+                reason: 'deleteOwn',
+              }),
+            }),
+          }),
+        )
       })
-      expect(searchResult.items.length).toEqual(5)
     })
 
     describe('pinMessage, unpinMessage and getPinnedMessages', () => {
@@ -941,6 +1059,88 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
           return item.timestamp <= arr[index - 1].timestamp
         }),
       ).toBe(true)
+    })
+  })
+
+  describe('Timeline Listeners', () => {
+    it('timeline listeners should be called when new message is received', async () => {
+      const inviterHandleName = `test_inviter_handle_${v4()}`
+      inviterHandle = await client1.handles.provisionHandle({
+        name: inviterHandleName,
+      })
+      await client1.startSyncing(inviterHandle.handleId)
+
+      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      inviteeHandle = await client2.handles.provisionHandle({
+        name: inviteeHandleName,
+      })
+      await client2.startSyncing(inviteeHandle.handleId)
+
+      const channel = await client1.channels.createChannel({
+        handleId: inviterHandle.handleId,
+        name: `channel-${v4()}`,
+        description: 'channel-description',
+        joinRule: ChannelJoinRule.PUBLIC,
+        tags: ['tag-1', 'tag-2'],
+        invitedHandleIds: [],
+        permissions: APIDataFactory.defaultChannelPermissionsInput,
+        defaultMemberRole: ChannelRole.PARTICIPANT,
+      })
+      expect(channel).toBeDefined()
+      channelIdsToCleanup.push(channel.channelId)
+      await delay(2000)
+      await client1.channels.sendInvitations({
+        handleId: inviterHandle.handleId,
+        channelId: channel.channelId,
+        targetHandleIds: [inviteeHandle.handleId],
+      })
+      await delay(2000)
+      await client2.channels.acceptInvitation({
+        handleId: inviteeHandle.handleId,
+        channelId: channel.channelId,
+      })
+      await delay(5000)
+
+      const listener1 = jest.fn()
+      await client1.messaging.registerMessageListener({
+        handleId: inviterHandle.handleId,
+        recipient: channel.channelId,
+        name: 'testListener1',
+        listener: listener1,
+      })
+
+      const listener2 = jest.fn()
+      await client2.messaging.registerMessageListener({
+        handleId: inviteeHandle.handleId,
+        recipient: channel.channelId,
+        name: 'testListener2',
+        listener: listener2,
+      })
+
+      await client1.messaging.sendMessage({
+        handleId: inviterHandle.handleId,
+        recipient: channel.channelId,
+        message: 'test message',
+        mentions: [],
+      })
+
+      await delay(5000)
+      expect(listener1).toHaveBeenCalled()
+      expect(listener2).toHaveBeenCalled()
+
+      listener1.mockClear()
+      listener2.mockClear()
+
+      await client2.messaging.sendMessage({
+        handleId: inviteeHandle.handleId,
+        recipient: channel.channelId,
+        message: 'test message',
+        mentions: [],
+      })
+
+      await delay(5000)
+      expect(listener1).toHaveBeenCalled()
+      expect(listener2).toHaveBeenCalled()
     })
   })
 })

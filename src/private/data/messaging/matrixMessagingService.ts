@@ -420,30 +420,26 @@ export class MatrixMessagingService implements MessagingService {
     return content
   }
 
-  // NOTE/TODO: Generated reason strings subject to change
   private handleRedactReason(
     reason: RedactReasonEntity | undefined,
   ): string | undefined {
     if (!reason) {
       return undefined
     }
-
+    const threadSuffix =
+      reason.type !== 'editReaction' &&
+      reason.type !== 'unknown' &&
+      reason.threadId
+        ? `: (in thread with Id: ${reason.threadId})`
+        : ''
     switch (reason.type) {
       case 'deleteOwn':
-        return (
-          'User deleted their own message' +
-          (reason.threadId ? ` (in thread with Id: ${reason.threadId})` : '')
-        )
+        return `${reason.type}${threadSuffix}`
       case 'editReaction':
-        return 'Reaction was edited'
+        return reason.type
       case 'moderation':
-        return (
-          'Message was moderated: ' +
-          (reason.hide ? '(hidden)' : `${reason.reason}`) +
-          (reason.threadId ? ` in thread with Id: (${reason.threadId})` : '')
-        )
+        return `${reason.type} ${reason.hide ? '(hidden)' : reason.reason}${threadSuffix}`
       case 'unknown':
-      default:
         return 'Redacted for unknown reason'
     }
   }
