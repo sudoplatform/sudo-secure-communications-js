@@ -1035,7 +1035,7 @@ export class MatrixClientManager {
       if (!event) {
         return undefined
       }
-      const messageTransformer = new MessageTransformer()
+      const messageTransformer = new MessageTransformer(this.log)
       const message = messageTransformer.fromMatrixToEntity(userId, event)
       if (message) {
         // Sender name is not available in event so populate based on room member.
@@ -1065,7 +1065,7 @@ export class MatrixClientManager {
       throw new RoomNotFoundError()
     }
 
-    const messageTransformer = new MessageTransformer()
+    const messageTransformer = new MessageTransformer(this.log)
     const messageEvents: MatrixEvent[] = []
     try {
       // Fetch messages based on limit and nextToken paginating backwards
@@ -1193,7 +1193,7 @@ export class MatrixClientManager {
   ): Promise<ChatSummaryEntity[]> {
     this.log.debug(this.getChatSummaries.name, { roomIds })
 
-    const messageTransformer = new MessageTransformer()
+    const messageTransformer = new MessageTransformer(this.log)
     const userId = await this.getUserId()
     const summaries = await Promise.all(
       Array.from(roomIds, async ([recipient, roomId]) => {
@@ -1535,7 +1535,7 @@ export class MatrixClientManager {
       }
 
       // Map, filter and deduplicate
-      const messageTransformer = new MessageTransformer()
+      const messageTransformer = new MessageTransformer(this.log)
       const replacements = relations
         .filter((event) => !event.isRedacted())
         .map((event) => messageTransformer.fromMatrixToEntity(userId, event))
@@ -2336,7 +2336,7 @@ export class MatrixClientManager {
   public registerEventListener(
     listener: (message: Message, roomId: string) => void,
   ): (event: MatrixEvent) => void {
-    const messageTransformer = new MessageTransformer()
+    const messageTransformer = new MessageTransformer(this.log)
     const eventListener = async (event: MatrixEvent) => {
       if (
         [EventType.RoomMessage, EventType.PollStart].includes(

@@ -11,11 +11,7 @@ import {
 } from 'matrix-js-sdk/lib/matrix'
 import { MessageTransformer } from '../../../../../../src/private/data/messaging/transformer/messageTransformer'
 import { MessageStateEntity } from '../../../../../../src/private/domain/entities/messaging/messageEntity'
-import {
-  HandleId,
-  MembershipState,
-  SecureCommsError,
-} from '../../../../../../src/public'
+import { HandleId, MembershipState } from '../../../../../../src/public'
 import { APIDataFactory } from '../../../../../data-factory/api'
 import { EntityDataFactory } from '../../../../../data-factory/entity'
 
@@ -197,7 +193,7 @@ describe('MessageTransformer Test Suite', () => {
         undefined,
       )
     })
-    it('should throw SecureCommsError when message contains invalid content type', () => {
+    it('should return an invalid message type when a message contains invalid content type', () => {
       const userId = 'testUserId'
       let event = new MatrixEvent({
         event_id: 'testMessageId',
@@ -207,19 +203,23 @@ describe('MessageTransformer Test Suite', () => {
         origin_server_ts: 1,
         unsigned: {},
       })
-      expect(() => instanceUnderTest.fromMatrixToEntity(userId, event)).toThrow(
-        SecureCommsError,
-      )
-      event = new MatrixEvent({
-        event_id: 'testMessageId',
-        type: 'm.room.message',
-        content: {},
-        sender: 'testHandleId',
-        origin_server_ts: 1,
-        unsigned: {},
-      })
-      expect(() => instanceUnderTest.fromMatrixToEntity(userId, event)).toThrow(
-        SecureCommsError,
+      expect(instanceUnderTest.fromMatrixToEntity(userId, event)).toStrictEqual(
+        {
+          messageId: 'testMessageId',
+          state: MessageStateEntity.COMMITTED,
+          timestamp: 1,
+          senderHandle: {
+            handleId: new HandleId('testHandleId'),
+            name: '',
+          },
+          isOwn: false,
+          content: {
+            type: 'invalid',
+            isEdited: false,
+          },
+          reactions: [],
+          receipts: [],
+        },
       )
     })
 

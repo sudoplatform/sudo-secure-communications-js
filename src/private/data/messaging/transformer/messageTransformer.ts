@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Logger } from '@sudoplatform/sudo-common'
 import {
   EventStatus,
   EventType,
@@ -44,6 +45,8 @@ import {
 import { MembershipStateTransformer } from '../../common/transformer/membershipStateTransformer'
 
 export class MessageTransformer {
+  constructor(private readonly log?: Logger) {}
+
   fromAPIToEntity(data: Message): MessageEntity {
     const messageStateTransformer = new MessageStateTransformer()
     const messageReactionTransformer = new MessageReactionTransformer()
@@ -265,7 +268,7 @@ export class MessageTransformer {
     }
     const contentType = content.msgtype
     let mappedContent: MessageContent = {
-      type: contentType ?? '',
+      type: contentType ?? 'unknown',
       isEdited: false,
     }
     switch (contentType) {
@@ -328,9 +331,14 @@ export class MessageTransformer {
         } as KeyVerificationRequest
         break
       default:
-        throw new SecureCommsError(
-          `Unsupported message content type: ${contentType}`,
+        this.log?.debug(
+          `Unsupported message content type: ${contentType}, treating as unknown`,
         )
+        mappedContent = {
+          type: contentType ?? 'unknown',
+          isEdited: false,
+        } as BaseMessageContent
+        break
     }
     return mappedContent
   }
