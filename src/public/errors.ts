@@ -50,7 +50,13 @@ export class HandleNotFoundError extends SecureCommsError {
   }
 }
 
-export class InvalidHandleError extends SecureCommsError {
+export class InvalidHandleNameError extends SecureCommsError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}
+
+export class InvalidHandleIdError extends SecureCommsError {
   constructor(msg?: string) {
     super(msg)
   }

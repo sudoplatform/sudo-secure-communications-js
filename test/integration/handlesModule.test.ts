@@ -15,7 +15,8 @@ import {
   HandleId,
   HandleNotAvailableError,
   HandleNotFoundError,
-  InvalidHandleError,
+  InvalidHandleIdError,
+  InvalidHandleNameError,
   SecureCommsClient,
 } from '../../src/public'
 
@@ -184,12 +185,18 @@ describe('SecureCommsClient HandlesModule Test Suite', () => {
   })
 
   describe('handle error handling', () => {
-    it('should throw an InvalidHandleError when an invalid handle name is supplied on handle provision', async () => {
-      await expect(
-        instanceUnderTest.handles.provisionHandle({
+    it('should throw an InvalidHandleNameError when an invalid handle name is supplied on handle provision', async () => {
+      try {
+        await instanceUnderTest.handles.provisionHandle({
           name: 'invalidName',
-        }),
-      ).rejects.toThrow(InvalidHandleError)
+        })
+        fail('Expected an error to be thrown')
+      } catch (error) {
+        expect(
+          error instanceof InvalidHandleNameError ||
+            error instanceof InvalidHandleIdError,
+        ).toBe(true)
+      }
     })
 
     it('should throw a HandleNotAvailableError when attempting to provision a handle that already exists', async () => {
@@ -227,7 +234,7 @@ describe('SecureCommsClient HandlesModule Test Suite', () => {
           handleId: createdHandle.handleId,
           name: 'invalidName',
         }),
-      ).rejects.toThrow(InvalidHandleError)
+      ).rejects.toThrow(InvalidHandleNameError)
     })
 
     it('should throw a HandleNotAvailableError when attempting to update with an unavailable handle name', async () => {

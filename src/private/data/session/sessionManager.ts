@@ -40,7 +40,7 @@ export class SessionManager {
       // stop syncing matrix client
       await session.matrixClient.stopSyncing()
       // Flush any still existing background watchers
-      await new Promise<void>((r) => setImmediate(r))
+      await new Promise<void>((r) => setTimeout(r, 0))
 
       // Drop session from store
       const handleStorage = await this.storageModule.useHandleStorage(
@@ -66,7 +66,7 @@ export class SessionManager {
     const handleIds = Object.keys(this.sessions)
     for (const id of handleIds) {
       // Flush any still existing background watchers
-      await new Promise<void>((r) => setImmediate(r))
+      await new Promise<void>((r) => setTimeout(r, 0))
       await this.deleteSession(new HandleId(id))
     }
   }

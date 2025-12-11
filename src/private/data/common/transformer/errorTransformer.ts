@@ -5,13 +5,13 @@
  */
 
 import {
-  AppSyncError,
   DefaultLogger,
   Logger,
   NotRegisteredError,
   ServiceError,
   mapGraphQLToClientError,
 } from '@sudoplatform/sudo-common'
+import { GraphQLError } from 'graphql'
 import {
   AliasNotAvailableError,
   ChannelNameNotAvailableError,
@@ -21,7 +21,8 @@ import {
   InvalidArgumentError,
   InvalidChannelAliasError,
   InvalidChannelStateError,
-  InvalidHandleError,
+  InvalidHandleIdError,
+  InvalidHandleNameError,
   NotAllowedError,
 } from '../../../../public/errors'
 
@@ -32,9 +33,13 @@ export class ErrorTransformer {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  toClientError(error: AppSyncError): Error {
-    this.log.debug('GraphQL call failed', { error })
-    switch (error.errorType) {
+  toClientError(
+    error:
+      | { errorType: string; errorInfo?: string; message: string }
+      | GraphQLError,
+  ): Error {
+    const errorType = 'errorType' in error ? error.errorType : error.message
+    switch (errorType) {
       case 'sudoplatform.securecomms.IdentityContextMissing':
         return new NotRegisteredError(error.message)
       case 'sudoplatform.ServiceError':
@@ -46,7 +51,9 @@ export class ErrorTransformer {
       case 'sudoplatform.securecomms.HandleNotFound':
         return new HandleNotFoundError(error.message)
       case 'sudoplatform.securecomms.InvalidHandleName':
-        return new InvalidHandleError(error.message)
+        return new InvalidHandleNameError(error.message)
+      case 'sudoplatform.securecomms.InvalidHandleId':
+        return new InvalidHandleIdError(error.message)
       case 'sudoplatform.securecomms.AliasNotAvailable':
         return new AliasNotAvailableError(error.message)
       case 'sudoplatform.securecomms.NameNotAvailable':

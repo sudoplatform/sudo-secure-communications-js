@@ -4,31 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphQLOptions } from '@aws-amplify/api-graphql'
 import {
   ApiClientManager,
   DefaultApiClientManager,
 } from '@sudoplatform/sudo-api-client'
 import {
-  AppSyncNetworkError,
   DefaultLogger,
   FatalError,
+  GraphQLNetworkError,
   Logger,
   UnknownGraphQLError,
-  isAppSyncNetworkError,
+  isGraphQLNetworkError,
   mapNetworkErrorToClientError,
 } from '@sudoplatform/sudo-common'
-import { NormalizedCacheObject } from 'apollo-cache-inmemory'
-import {
-  MutationOptions,
-  QueryOptions,
-} from 'apollo-client/core/watchQueryOptions'
-import { ApolloError } from 'apollo-client/errors/ApolloError'
-import AWSAppSyncClient from 'aws-appsync'
+import { GraphQLClient } from '@sudoplatform/sudo-user'
 import { ErrorTransformer } from './transformer/errorTransformer'
 import {
   BatchPublicSecureCommsChannelInfo,
   CheckSecureCommsWordValidityDocument,
   CheckSecureCommsWordValidityQuery,
+  CheckSecureCommsWordValidityQueryVariables,
   CreateSecureCommsChannelDocument,
   CreateSecureCommsChannelInput,
   CreateSecureCommsChannelMutation,
@@ -42,20 +38,27 @@ import {
   GetMediaBucketCredentialDocument,
   GetMediaBucketCredentialInput,
   GetMediaBucketCredentialQuery,
+  GetMediaBucketCredentialQueryVariables,
   GetSecureCommsChannelDocument,
   GetSecureCommsChannelQuery,
+  GetSecureCommsChannelQueryVariables,
   GetSecureCommsChannelsDocument,
   GetSecureCommsChannelsQuery,
+  GetSecureCommsChannelsQueryVariables,
   GetSecureCommsHandleByNameDocument,
   GetSecureCommsHandleByNameQuery,
+  GetSecureCommsHandleByNameQueryVariables,
   GetSecureCommsSessionDocument,
   GetSecureCommsSessionInput,
   GetSecureCommsSessionQuery,
+  GetSecureCommsSessionQueryVariables,
   ListSecureCommsHandlesDocument,
   ListSecureCommsHandlesQuery,
+  ListSecureCommsHandlesQueryVariables,
   ListSecureCommsPublicChannelsDocument,
   ListSecureCommsPublicChannelsInput,
   ListSecureCommsPublicChannelsQuery,
+  ListSecureCommsPublicChannelsQueryVariables,
   ListedSecureCommsChannelInfoConnection,
   MediaBucketCredential,
   PublicSecureCommsChannelInfo,
@@ -74,7 +77,7 @@ import {
 
 export class ApiClient {
   private readonly log: Logger
-  private readonly client: AWSAppSyncClient<NormalizedCacheObject>
+  private readonly client: GraphQLClient
 
   private readonly graphqlErrorTransformer: ErrorTransformer
 
@@ -84,7 +87,6 @@ export class ApiClient {
     const clientManager =
       apiClientManager ?? DefaultApiClientManager.getInstance()
     this.client = clientManager.getClient({
-      disableOffline: true,
       configNamespace: 'secureCommsService',
     })
   }
@@ -105,8 +107,7 @@ export class ApiClient {
   ): Promise<SecureCommsSession> {
     const data = await this.performQuery<GetSecureCommsSessionQuery>({
       query: GetSecureCommsSessionDocument,
-      variables: { input },
-      fetchPolicy: 'network-only',
+      variables: { input } as GetSecureCommsSessionQueryVariables,
       calleeName: this.getSecureCommsSession.name,
     })
     return data.getSecureCommsSession
@@ -117,8 +118,7 @@ export class ApiClient {
   ): Promise<PublicSecureCommsHandleInfo | undefined> {
     const data = await this.performQuery<GetSecureCommsHandleByNameQuery>({
       query: GetSecureCommsHandleByNameDocument,
-      variables: { name },
-      fetchPolicy: 'network-only',
+      variables: { name } as GetSecureCommsHandleByNameQueryVariables,
       calleeName: this.getSecureCommsHandleByName.name,
     })
     return data.getSecureCommsHandleByName ?? undefined
@@ -150,8 +150,7 @@ export class ApiClient {
   ): Promise<SecureCommsHandleConnection> {
     const data = await this.performQuery<ListSecureCommsHandlesQuery>({
       query: ListSecureCommsHandlesDocument,
-      variables: { limit, nextToken },
-      fetchPolicy: 'network-only',
+      variables: { limit, nextToken } as ListSecureCommsHandlesQueryVariables,
       calleeName: this.listSecureCommsHandles.name,
     })
     return data.listSecureCommsHandles
@@ -196,8 +195,7 @@ export class ApiClient {
   ): Promise<PublicSecureCommsChannelInfo | undefined> {
     const data = await this.performQuery<GetSecureCommsChannelQuery>({
       query: GetSecureCommsChannelDocument,
-      variables: { id },
-      fetchPolicy: 'network-only',
+      variables: { id } as GetSecureCommsChannelQueryVariables,
       calleeName: this.getSecureCommsChannel.name,
     })
     return data.getSecureCommsChannel ?? undefined
@@ -208,8 +206,7 @@ export class ApiClient {
   ): Promise<BatchPublicSecureCommsChannelInfo> {
     const data = await this.performQuery<GetSecureCommsChannelsQuery>({
       query: GetSecureCommsChannelsDocument,
-      variables: { ids },
-      fetchPolicy: 'network-only',
+      variables: { ids } as GetSecureCommsChannelsQueryVariables,
       calleeName: this.listSecureCommsChannels.name,
     })
     return data.getSecureCommsChannels
@@ -220,8 +217,7 @@ export class ApiClient {
   ): Promise<ListedSecureCommsChannelInfoConnection> {
     const data = await this.performQuery<ListSecureCommsPublicChannelsQuery>({
       query: ListSecureCommsPublicChannelsDocument,
-      variables: { input },
-      fetchPolicy: 'network-only',
+      variables: { input } as ListSecureCommsPublicChannelsQueryVariables,
       calleeName: this.listSecureCommsPublicChannels.name,
     })
     return data.listSecureCommsPublicChannels
@@ -232,8 +228,7 @@ export class ApiClient {
   ): Promise<string[]> {
     const data = await this.performQuery<CheckSecureCommsWordValidityQuery>({
       query: CheckSecureCommsWordValidityDocument,
-      variables: { words },
-      fetchPolicy: 'network-only',
+      variables: { words } as CheckSecureCommsWordValidityQueryVariables,
       calleeName: this.checkSecureCommsWordValidity.name,
     })
     return data.checkSecureCommsWordValidity
@@ -244,8 +239,7 @@ export class ApiClient {
   ): Promise<MediaBucketCredential> {
     const data = await this.performQuery<GetMediaBucketCredentialQuery>({
       query: GetMediaBucketCredentialDocument,
-      variables: { input },
-      fetchPolicy: 'network-only',
+      variables: { input } as GetMediaBucketCredentialQueryVariables,
       calleeName: this.getMediaBucketCredential.name,
     })
     return data.getMediaBucketCredential
@@ -253,36 +247,25 @@ export class ApiClient {
 
   private async performQuery<Q>({
     variables,
-    fetchPolicy,
     query,
     calleeName,
-  }: QueryOptions & { calleeName?: string }): Promise<Q> {
+  }: GraphQLOptions & { calleeName?: string }): Promise<Q> {
     let result
     try {
       result = await this.client.query<Q>({
         variables,
-        fetchPolicy,
         query,
       })
     } catch (err) {
-      if (isAppSyncNetworkError(err as Error)) {
-        throw mapNetworkErrorToClientError(err as AppSyncNetworkError)
+      if (isGraphQLNetworkError(err as Error)) {
+        throw mapNetworkErrorToClientError(err as GraphQLNetworkError)
       }
-
-      const clientError = err as ApolloError
-      this.log.debug('error received', { calleeName, clientError })
-      const error = clientError.graphQLErrors?.[0]
-      if (error) {
-        this.log.debug('appSync query failed with error', { error })
-        throw this.graphqlErrorTransformer.toClientError(error)
-      } else {
-        throw new UnknownGraphQLError(err)
-      }
+      throw this.mapGraphQLCallError(err as Error)
     }
 
     const error = result.errors?.[0]
     if (error) {
-      this.log.debug('error received', { error })
+      this.log.debug('appsync query failed with error', { error })
       throw this.graphqlErrorTransformer.toClientError(error)
     }
     if (result.data) {
@@ -298,7 +281,8 @@ export class ApiClient {
     mutation,
     variables,
     calleeName,
-  }: Omit<MutationOptions<M>, 'fetchPolicy'> & {
+  }: Omit<GraphQLOptions, 'query'> & {
+    mutation: GraphQLOptions['query']
     calleeName?: string
   }): Promise<M> {
     let result
@@ -308,19 +292,10 @@ export class ApiClient {
         variables,
       })
     } catch (err) {
-      if (isAppSyncNetworkError(err as Error)) {
-        throw mapNetworkErrorToClientError(err as AppSyncNetworkError)
+      if (isGraphQLNetworkError(err as Error)) {
+        throw mapNetworkErrorToClientError(err as GraphQLNetworkError)
       }
-
-      const clientError = err as ApolloError
-      this.log.debug('error received', { calleeName, clientError })
-      const error = clientError.graphQLErrors?.[0]
-      if (error) {
-        this.log.debug('appSync mutation failed with error', { error })
-        throw this.graphqlErrorTransformer.toClientError(error)
-      } else {
-        throw new UnknownGraphQLError(err)
-      }
+      throw this.mapGraphQLCallError(err as Error)
     }
     const error = result.errors?.[0]
     if (error) {
@@ -334,5 +309,26 @@ export class ApiClient {
         `${calleeName ?? '<no callee>'} did not return any result`,
       )
     }
+  }
+
+  mapGraphQLCallError = (err: Error): Error => {
+    if ('graphQLErrors' in err && Array.isArray(err.graphQLErrors)) {
+      const error = err.graphQLErrors[0] as {
+        errorType: string
+        message: string
+        name: string
+      }
+      if (error) {
+        this.log.debug('appSync operation failed with error', { err })
+        return this.graphqlErrorTransformer.toClientError(error)
+      }
+    }
+    if ('errorType' in err) {
+      this.log.debug('appSync operation failed with error', { err })
+      return this.graphqlErrorTransformer.toClientError(
+        err as { errorType: string; message: string; errorInfo?: string },
+      )
+    }
+    return new UnknownGraphQLError(err)
   }
 }

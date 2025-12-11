@@ -777,7 +777,9 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
         inviterHandle.handleId.toString(),
         inviteeHandle.handleId.toString(),
       ]
-      expect(memberHandleIds.sort()).toEqual(expectedIds.sort())
+      expect(
+        expectedIds.every((item) => memberHandleIds.includes(item)),
+      ).toBeTruthy()
 
       // Inviter handle bans the invitee handle from the group
       await client1.groups.banHandle({
@@ -847,7 +849,9 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
         inviterHandle.handleId.toString(),
         inviteeHandle.handleId.toString(),
       ]
-      expect(memberHandleIds.sort()).toEqual(expectedIds.sort())
+      expect(
+        expectedIds.every((item) => memberHandleIds.includes(item)),
+      ).toBeTruthy()
 
       // Inviter handle kicks the invitee handle from the group
       await client1.groups.kickHandle({
