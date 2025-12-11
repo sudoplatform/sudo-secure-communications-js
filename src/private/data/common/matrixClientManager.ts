@@ -56,6 +56,8 @@ import {
 import { getSecureCommsServiceConfig } from './config'
 import { MatrixClient, createClient } from './matrixTypes'
 import {
+  EventListenerContent,
+  EventListenerReaction,
   HandleId,
   HandleNotFoundError,
   MembershipChange,
@@ -65,7 +67,7 @@ import {
   UnauthorizedError,
 } from '../../../public'
 import { HandleStorage } from '../../../public/modules/storageModule'
-import { Message } from '../../../public/typings'
+import { RedactedMessage } from '../../../public/typings'
 import { PowerLevelsEntity } from '../../domain/entities/common/powerLevelsEntity'
 import {
   DirectChatPermissionsEntity,
@@ -2334,37 +2336,89 @@ export class MatrixClientManager {
   // MARK: Event Listener
 
   public registerEventListener(
-    listener: (message: Message, roomId: string) => void,
+    listener: (content: EventListenerContent, roomId: string) => void,
   ): (event: MatrixEvent) => void {
     const messageTransformer = new MessageTransformer(this.log)
     const eventListener = async (event: MatrixEvent) => {
-      if (
-        [EventType.RoomMessage, EventType.PollStart].includes(
-          event.getType() as EventType,
-        )
-      ) {
-        try {
-          const userId = await this.getUserId()
-          const messageEntity = messageTransformer.fromMatrixToEntity(
-            userId,
-            event,
-          )
-          if (!messageEntity) return
-          const roomId = event.getRoomId()
-          if (!roomId) return
-          const room = await this.getRoom(roomId)
-          if (!room) return
-          messageEntity.senderHandle.name =
-            room.getMember(messageEntity.senderHandle.handleId.toString())
-              ?.name ?? ''
-          const message = messageTransformer.fromEntityToAPI(messageEntity)
-          listener(message, roomId)
-        } catch (err) {
-          this.log.error('Error transforming event to message', {
-            err,
-            eventId: event.getId(),
-          })
-        }
+      const roomId = event.getRoomId()
+      if (!roomId) return
+      const userId = await this.getUserId()
+      let messageEntity: MessageEntity | undefined
+      let originalEventId: string | undefined
+      const room = await this.getRoom(roomId)
+      if (!room) return
+      switch (event.getType() as EventType) {
+        case EventType.RoomMessage:
+          try {
+            messageEntity = messageTransformer.fromMatrixToEntity(userId, event)
+            if (!messageEntity) return
+            messageEntity.senderHandle.name =
+              room.getMember(messageEntity.senderHandle.handleId.toString())
+                ?.name ?? ''
+            const message = messageTransformer.fromEntityToAPI(messageEntity)
+            listener({ message }, roomId)
+          } catch (err) {
+            this.log.error('Error transforming message event', {
+              err,
+              eventId: event.getId(),
+            })
+          }
+          break
+        case EventType.Reaction:
+          try {
+            originalEventId = event.getContent()?.['m.relates_to']?.event_id
+            if (!originalEventId) return
+            const reaction: EventListenerReaction = {
+              content: event.getContent()?.['m.relates_to']?.key ?? '',
+              messageId: event.getContent()?.['m.relates_to']?.event_id ?? '',
+              timestamp: event.getTs() ?? 0,
+              senderHandle: {
+                handleId: new HandleId(event.getSender() ?? ''),
+                name: room.getMember(event.getSender() ?? '')?.name ?? '',
+              },
+            }
+            listener({ reaction }, roomId)
+          } catch (err) {
+            this.log.error('Error transforming reaction event', {
+              err,
+              eventId: event.getId(),
+            })
+          }
+          break
+        case EventType.RoomRedaction:
+          // this is a redact event, not the redacted message, so we cannot use existing transformer
+          try {
+            originalEventId = event.getContent()?.['redacts']
+            if (!originalEventId) return
+            const content = event.getContent() as any
+            const originServerTs =
+              (event as { event: { origin_server_ts: number } }).event
+                .origin_server_ts ?? 0
+            const redacted: RedactedMessage = {
+              redactedBecause: {
+                event_id: event.getId() ?? '',
+                content: {
+                  reason: content?.['reason'] ?? '',
+                  redacts: originalEventId,
+                },
+                origin_server_ts: originServerTs,
+                redacts: originalEventId,
+                room_id: roomId,
+                sender: event.getSender() ?? '',
+                type: event.getType() ?? '',
+                unsigned: {},
+              },
+              type: event.getType() ?? '',
+              isEdited: false,
+            }
+            listener({ redacted }, roomId)
+          } catch (err) {
+            this.log.error('Error transforming redaction event', {
+              err,
+              eventId: event.getId(),
+            })
+          }
+          break
       }
     }
     this.client.on('event' as any, eventListener)

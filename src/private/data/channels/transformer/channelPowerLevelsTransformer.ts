@@ -8,7 +8,6 @@ import {
   SecureCommsChannelPowerLevelsInput,
   SecureCommsNamedPowerLevelInput,
 } from '../../../../gen/graphqlTypes'
-import { InvalidArgumentError } from '../../../../public'
 import {
   ChannelPermissionsEntity,
   ChannelPermissionsInputEntity,
@@ -33,16 +32,14 @@ export class ChannelPowerLevelsTransformer {
 
   fromPowerLevelToEntity(powerLevel: number): ChannelRoleEntity {
     switch (true) {
-      case powerLevel >= 51 && powerLevel < 101:
+      case powerLevel >= 100:
         return ChannelRoleEntity.ADMIN
-      case powerLevel >= 26 && powerLevel < 51:
+      case powerLevel >= 50:
         return ChannelRoleEntity.MODERATOR
-      case powerLevel >= 11 && powerLevel < 26:
+      case powerLevel >= 25:
         return ChannelRoleEntity.PARTICIPANT
-      case powerLevel >= 0 && powerLevel < 11:
-        return ChannelRoleEntity.REACT_ONLY_PARTICIPANT
       default:
-        throw new InvalidArgumentError('power level is out of range')
+        return ChannelRoleEntity.REACT_ONLY_PARTICIPANT
     }
   }
 

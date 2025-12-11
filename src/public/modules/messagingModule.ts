@@ -37,11 +37,13 @@ import { ToggleReactionUseCase } from '../../private/domain/use-cases/messaging/
 import { Pagination } from '../secureCommsClient'
 import {
   ChatSummary,
+  Handle,
   HandleId,
   Message,
   MessageMention,
   Recipient,
   RedactReason,
+  RedactedMessage,
   SearchMessagesItem,
   ThumbnailInfo,
 } from '../typings'
@@ -378,13 +380,13 @@ export interface GetPollResponsesInput {
  * @property {HandleId} handleId The identifier of the handle owned by this client.
  * @property {Recipient} recipient The target recipient.
  * @property {string} name The name of the listener.
- * @property {TimelineListener} listener The listener to register.
+ * @property {function} listener The listener to register.
  */
 export interface RegisterMessageListenerInput {
   handleId: HandleId
   recipient: Recipient
   name: string
-  listener: (message: Message) => void
+  listener: (content: EventListenerContent) => void
 }
 
 /**
@@ -399,6 +401,36 @@ export interface UnregisterMessageListenerInput {
   handleId: HandleId
   recipient: Recipient
   name: string
+}
+
+/**
+ * Event listener emitted contentfor a reaction event.
+ *
+ * @interface EventListenerReaction
+ * @property {string} content The content of the reaction.
+ * @property {string} messageId The message ID of the reaction.
+ * @property {number} timestamp The timestamp of the reaction.
+ * @property {Handle} senderHandle The sender handle of the reaction.
+ */
+export interface EventListenerReaction {
+  content: string
+  messageId: string
+  timestamp: number
+  senderHandle: Handle
+}
+
+/**
+ * Event listener emitted content for a matrix event.
+ *
+ * @interface EventListenerContent
+ * @property {Message} message The message.
+ * @property {RedactedMessage} redacted The redacted message.
+ * @property {EventListenerReaction} reaction The reaction.
+ */
+export interface EventListenerContent {
+  message?: Message
+  redacted?: RedactedMessage
+  reaction?: EventListenerReaction
 }
 
 /**
@@ -586,7 +618,7 @@ export class DefaultMessagingModule implements MessagingModule {
   */
   private messageListeners: Map<
     HandleId,
-    Map<string, Map<string, (message: Message) => void>>
+    Map<string, Map<string, (content: EventListenerContent) => void>>
   > = new Map()
 
   // A map of matrix client event listeners for each handle
@@ -917,15 +949,15 @@ export class DefaultMessagingModule implements MessagingModule {
 
   private getHandleMessageListener(
     handleId: HandleId,
-  ): (message: Message, roomId: string) => void {
-    const listener = (message: Message, roomId: string) => {
+  ): (content: EventListenerContent, roomId: string) => void {
+    const listener = (content: EventListenerContent, roomId: string) => {
       const handleListeners = this.messageListeners.get(handleId)
       if (!handleListeners) return
       const recipientListeners = handleListeners.get(roomId)
       if (!recipientListeners) return
-      recipientListeners.forEach((listener) => {
+      recipientListeners.forEach((recipientListener) => {
         try {
-          listener(message)
+          recipientListener(content)
         } catch (err) {
           this.log.error('Error in timeline listener', { err, handleId })
         }
