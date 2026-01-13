@@ -438,7 +438,12 @@ export class MatrixMessagingService implements MessagingService {
       case 'editReaction':
         return reason.type
       case 'moderation':
-        return `${reason.type} ${reason.hide ? '(hidden)' : reason.reason}${threadSuffix}`
+        if (reason.hide) {
+          return `${reason.type}: (hidden)${threadSuffix}`
+        }
+        return reason.reason
+          ? `${reason.type}: ${reason.reason}${threadSuffix}`
+          : `${reason.type}${threadSuffix}`
       case 'unknown':
         return 'Redacted for unknown reason'
     }

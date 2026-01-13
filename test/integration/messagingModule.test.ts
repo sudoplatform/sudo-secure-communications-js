@@ -17,9 +17,9 @@ import {
   MembershipState,
   Message,
   MessageState,
+  ModerationRedactReason,
   OwnedHandle,
   PollType,
-  RedactedMessage,
   SecureCommsClient,
 } from '../../src/public'
 import { APIDataFactory } from '../data-factory/api'
@@ -510,6 +510,125 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
               type: 'm.room.redaction',
               content: expect.objectContaining({
                 reason: 'deleteOwn',
+              }),
+            }),
+          }),
+        )
+      })
+
+      it('moderator deletes another users message in a channel successfully', async () => {
+        const inviterHandleName = `test_inviter_handle_${v4()}`
+        inviterHandle = await client1.handles.provisionHandle({
+          name: inviterHandleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
+
+        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        inviteeHandle = await client2.handles.provisionHandle({
+          name: inviteeHandleName,
+        })
+        await client2.startSyncing(inviteeHandle.handleId)
+
+        const name = `channel-${v4()}`
+        const description = 'channel-description'
+        const tags = ['tag-1', 'tag-2']
+        const channel = await client1.channels.createChannel({
+          handleId: inviterHandle.handleId,
+          name,
+          description,
+          joinRule: ChannelJoinRule.PUBLIC,
+          tags,
+          invitedHandleIds: [],
+          permissions: APIDataFactory.defaultChannelPermissionsInput,
+          defaultMemberRole: ChannelRole.PARTICIPANT,
+        })
+        expect(channel).toBeDefined()
+        channelIdsToCleanup.push(channel.channelId)
+
+        // Inviter handle sends invitation to invitee handle
+        await client1.channels.sendInvitations({
+          handleId: inviterHandle.handleId,
+          channelId: channel.channelId,
+          targetHandleIds: [inviteeHandle.handleId],
+        })
+
+        // Check if the inviter handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client1,
+          inviterHandle.handleId,
+          channel.channelId,
+          inviterHandle.handleId,
+          MembershipState.JOINED,
+        )
+
+        // Invitee handle accepts the invitation from the inviter handle
+        await client2.channels.acceptInvitation({
+          handleId: inviteeHandle.handleId,
+          channelId: channel.channelId,
+        })
+
+        // Check if the invitee handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client2,
+          inviteeHandle.handleId,
+          channel.channelId,
+          inviteeHandle.handleId,
+          MembershipState.JOINED,
+        )
+
+        // Send a message from inviter to invitee in the channel
+        let message = 'This is a message from inviter to invitee in a channel'
+        await client1.messaging.sendMessage({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+          message,
+          mentions: [],
+        })
+
+        // Send a message from invitee to inviter in the channel
+        message = 'Hey inviter, this is invitee responding to you'
+        await client2.messaging.sendMessage({
+          handleId: inviteeHandle.handleId,
+          recipient: channel.channelId,
+          message,
+          mentions: [],
+        })
+
+        // Allow some time to sync messages
+        await delay(5000)
+
+        // Retrieve text messages for the invitee
+        let inviteeMessages = await client2.messaging.getMessages({
+          handleId: inviteeHandle.handleId,
+          recipient: channel.channelId,
+        })
+        const inviteeTextMsgs = inviteeMessages.items.filter(
+          (item) => item.content.type === 'm.text',
+        )
+        expect(inviteeTextMsgs.length).toEqual(2)
+
+        // Inviter (moderator) deletes invitees message
+        await client1.messaging.deleteMessage({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+          messageId: inviteeTextMsgs[0].messageId,
+          reason: { type: 'moderation' } as ModerationRedactReason,
+        })
+
+        // Check for redacted message amongst retrieved messages for the invitee
+        inviteeMessages = await client2.messaging.getMessages({
+          handleId: inviteeHandle.handleId,
+          recipient: channel.channelId,
+        })
+        const inviteeRedactedMsg = inviteeMessages.items.find(
+          (item) => 'redactedBecause' in item.content,
+        )
+        expect(inviteeRedactedMsg?.content).toEqual(
+          expect.objectContaining({
+            redactedBecause: expect.objectContaining({
+              type: 'm.room.redaction',
+              content: expect.objectContaining({
+                reason: 'moderation',
               }),
             }),
           }),
