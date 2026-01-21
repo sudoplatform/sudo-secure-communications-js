@@ -65,10 +65,10 @@
     "@sudoplatform/sudo-user": "^16.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.369.0",
-    "@aws-sdk/credential-provider-cognito-identity": "^3.369.0",
-    "@aws-sdk/credential-providers": "^3.369.0",
-    "@aws-sdk/lib-storage": "^3.369.0",
+    "@aws-sdk/client-s3": "^3.965.0",
+    "@aws-sdk/credential-provider-cognito-identity": "^3.965.0",
+    "@aws-sdk/credential-providers": "^3.965.0",
+    "@aws-sdk/lib-storage": "^3.965.0",
     "@matrix-org/matrix-sdk-crypto-wasm": "15.3.0",
     "@sudoplatform/sudo-web-crypto-provider": "^10.0.1",
     "@types/md5": "^2.3.6",
@@ -168,6 +168,16 @@
       "until": 1772203020,
       "untilISO": "2026-2-28T00:37:00Z",
       "reason": "Waiting for patch - @smithy/config-resolver"
+    },
+    "1112255": {
+      "until": 1772203020,
+      "untilISO": "2026-2-28T00:37:00Z",
+      "reason": "node-tar used by bufferutil by websocket"
+    },
+    "1112329": {
+      "until": 1772203020,
+      "untilISO": "2026-2-28T00:37:00Z",
+      "reason": "node-tar used by bufferutil by websocket"
     }
   }
 }

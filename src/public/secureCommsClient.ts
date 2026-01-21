@@ -173,6 +173,9 @@ export type SecureCommsClientOptions = {
 
   /** StorageProviderFactory to use. Default is undefined, which will make the client use in-memory storage. */
   storageProviderFactory?: StorageProviderFactory
+
+  /** AutoRefreshTokenMinutesBeforeExpiration to use. Default is 5 minutes. Set to 0 to disable automatic token refresh. */
+  autoRefreshTokenMinutesBeforeExpiration?: number
 }
 
 export class DefaultSecureCommsClient implements SecureCommsClient {
@@ -227,7 +230,11 @@ export class DefaultSecureCommsClient implements SecureCommsClient {
       opts.sudoKeyManager ?? new DefaultSudoKeyManager(this.sudoCryptoProvider)
 
     this.sessionService = new DefaultSessionService(this.apiClient)
-    this.sessionManager = new SessionManager(this.sessionService, this.storage)
+    this.sessionManager = new SessionManager(
+      this.sessionService,
+      this.storage,
+      opts.autoRefreshTokenMinutesBeforeExpiration ?? 5,
+    )
 
     this.mediaCredentialService = new DefaultMediaCredentialService(
       this.apiClient,
