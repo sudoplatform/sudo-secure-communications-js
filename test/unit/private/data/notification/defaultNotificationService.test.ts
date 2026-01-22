@@ -52,6 +52,7 @@ describe('DefaultNotificationService Test Suite', () => {
 
   const testHandleId = new HandleId('testHandleId')
   const testChatId = new ChatId('testChatId')
+  const testChatIdMuted = new ChatId('testChatIdMuted')
   const testGroupId = new GroupId('testGroupId')
   const testChannelId = new ChannelId('testChannelId')
   const testEventId = 'testEventId'
@@ -87,6 +88,11 @@ describe('DefaultNotificationService Test Suite', () => {
           {
             rule_id: 'custom.rule.room.testChatId',
             actions: ['notify'],
+            enabled: true,
+          },
+          {
+            rule_id: `custom.rule.room.${testChatIdMuted.value}`,
+            actions: [],
             enabled: true,
           },
         ],
@@ -254,6 +260,9 @@ describe('DefaultNotificationService Test Suite', () => {
         recipientChatRules: {
           [testChatId.value]: {
             messageLevel: MessageNotificationLevel.allMessages,
+          },
+          [testChatIdMuted.value]: {
+            messageLevel: MessageNotificationLevel.mute,
           },
         },
       }

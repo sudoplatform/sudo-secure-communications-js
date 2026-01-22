@@ -179,6 +179,11 @@ export class DefaultNotificationService implements NotificationService {
 
       const roomId = roomIdMatch[2]
 
+      if (rule.actions?.length === 0) {
+        recipientChatRules[roomId] = {
+          messageLevel: MessageNotificationLevel.mute,
+        }
+      }
       if (rule.actions?.includes(PushRuleActionName.Notify)) {
         recipientChatRules[roomId] = {
           messageLevel: MessageNotificationLevel.allMessages,

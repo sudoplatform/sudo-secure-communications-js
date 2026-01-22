@@ -178,6 +178,11 @@
       "until": 1772203020,
       "untilISO": "2026-2-28T00:37:00Z",
       "reason": "node-tar used by bufferutil by websocket"
+    },
+    "1112455": {
+      "until": 1772203020,
+      "untilISO": "2026-2-28T00:37:00Z",
+      "reason": "Waiting for patch - Lodash used by other sudo packages"
     }
   }
 }
