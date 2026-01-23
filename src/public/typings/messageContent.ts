@@ -19,6 +19,7 @@ export type MessageContent =
   | EncryptedMessage
   | RedactedMessage
   | SelfDestructedMessage
+  | EditedMessage
   // self destructibles
   | Text
   | Emote
@@ -104,8 +105,18 @@ export interface MembershipChange extends BaseMessageContent {
  * @interface SelfDestructible
  * @property {SelfDestructInfo} selfDestructInfo Self-destructing properties of a message.
  */
-interface SelfDestructible extends BaseMessageContent {
+export interface SelfDestructible extends BaseMessageContent {
   selfDestructInfo?: SelfDestructInfo
+}
+
+/**
+ * Edited message content. Messages of this type have replaced the original message.
+ * 
+ * @interface EditedMessage
+ * @property {string} originalEventId The ID of the original message that was edited.
+ */
+export interface EditedMessage extends BaseMessageContent {
+  originalEventId?: string
 }
 
 // MARK: SelfDestructibles

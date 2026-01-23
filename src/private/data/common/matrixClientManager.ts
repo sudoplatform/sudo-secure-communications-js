@@ -67,7 +67,7 @@ import {
   UnauthorizedError,
 } from '../../../public'
 import { HandleStorage } from '../../../public/modules/storageModule'
-import { RedactedMessage } from '../../../public/typings'
+import { EditedMessage, RedactedMessage } from '../../../public/typings'
 import { PowerLevelsEntity } from '../../domain/entities/common/powerLevelsEntity'
 import {
   DirectChatPermissionsEntity,
@@ -2350,12 +2350,19 @@ export class MatrixClientManager {
       switch (event.getType() as EventType) {
         case EventType.RoomMessage:
           try {
+            originalEventId = event.getContent()?.['m.relates_to']?.event_id
             messageEntity = messageTransformer.fromMatrixToEntity(userId, event)
             if (!messageEntity) return
             messageEntity.senderHandle.name =
               room.getMember(messageEntity.senderHandle.handleId.toString())
                 ?.name ?? ''
             const message = messageTransformer.fromEntityToAPI(messageEntity)
+            if (originalEventId) {
+              message.content = {
+                ...message.content,
+                originalEventId,
+              } as EditedMessage
+            }
             listener({ message }, roomId)
           } catch (err) {
             this.log.error('Error transforming message event', {
