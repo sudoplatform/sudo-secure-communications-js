@@ -335,8 +335,8 @@ export class SessionManager {
         deviceId: storedToken.deviceId,
       }
     }
-    // Token not in storage or invalid, get from service
-    // Use deviceId from invalid stored token if available
+    // Token not in storage or invalid/expired, get from service
+    // Use deviceId from previously stored token if available
     const deviceId = storedToken?.deviceId
     const serviceToken = await this.getAccessTokenFromService(
       handleId,
@@ -401,11 +401,20 @@ export class SessionManager {
 
     if (typeof indexedDB !== 'undefined') {
       // use indexedDB if available (i.e., in browser or Node with polyfill)
-      await client.initRustCrypto({
+      const rustCryptoOptions = {
         useIndexedDB: true,
         cryptoDatabasePrefix: `matrix-js-sdk:${handleId}`,
         storagePassword: storePassphrase,
-      } as any)
+      }
+      try {
+        await client.initRustCrypto(rustCryptoOptions)
+      } catch (error) {
+        // Rust crypto may fail to init due to a changed device ID.
+        // Clear rust crypto store to start fresh.
+        indexedDB.deleteDatabase(`matrix-js-sdk:${handleId}::matrix-sdk-crypto`)
+        await client.initRustCrypto(rustCryptoOptions)
+      }
+
       // startup the matrix store to load persisted matrix data from the database
       await handleStorage?.matrixStore.startup()
     } else {
