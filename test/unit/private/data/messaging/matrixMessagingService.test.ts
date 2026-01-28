@@ -1223,6 +1223,7 @@ describe('MatrixMessagingService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve()
 
@@ -1230,6 +1231,9 @@ describe('MatrixMessagingService Test Suite', () => {
         recipient: handleId,
         messageId: 'messageId',
         content: 'content',
+        customFields: {
+          testField: 'testFieldValue',
+        },
       }
       await expect(
         instanceUnderTest.toggleReaction(input),
@@ -1243,6 +1247,7 @@ describe('MatrixMessagingService Test Suite', () => {
       expect(contentArg).toStrictEqual<typeof contentArg>(input.content)
       verify(
         mockMatrixClientManager.toggleReaction(
+          anything(),
           anything(),
           anything(),
           anything(),

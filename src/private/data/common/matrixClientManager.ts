@@ -1372,6 +1372,7 @@ export class MatrixClientManager {
     roomId: string,
     eventId: string,
     reaction: string,
+    customFields?: Record<string, any>,
   ): Promise<void> {
     this.log.debug(this.toggleReaction.name, { roomId, eventId, reaction })
 
@@ -1402,6 +1403,7 @@ export class MatrixClientManager {
             event_id: eventId,
             key: reaction,
           },
+          ...customFields,
         })
       }
     } catch (err) {
