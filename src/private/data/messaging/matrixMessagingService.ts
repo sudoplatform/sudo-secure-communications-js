@@ -210,7 +210,6 @@ export class MatrixMessagingService implements MessagingService {
       roomId,
       input.messageId,
       input.content,
-      input.customFields,
     )
   }
 

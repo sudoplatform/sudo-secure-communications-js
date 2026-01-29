@@ -239,14 +239,12 @@ export interface SendMediaInput {
  * @property {string} messageId The identifier of the target message.
  * @property {string} content The reaction string to attach to the message. This may be an
  *  emoji or any other app-specific string.
- * @property {Record<string, any>} customFields Custom fields to attach to the reaction.
  */
 export interface ToggleReactionInput {
   handleId: HandleId
   recipient: Recipient
   messageId: string
   content: string
-  customFields?: Record<string, any>
 }
 
 /**
@@ -802,7 +800,6 @@ export class DefaultMessagingModule implements MessagingModule {
       recipient: input.recipient,
       messageId: input.messageId,
       content: input.content,
-      customFields: input.customFields,
     })
   }
 

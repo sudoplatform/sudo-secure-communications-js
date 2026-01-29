@@ -19,7 +19,6 @@ interface ToggleReactionUseCaseInput {
   recipient: Recipient
   messageId: string
   content: string
-  customFields?: Record<string, any>
 }
 
 /**
@@ -48,7 +47,6 @@ export class ToggleReactionUseCase {
       recipient: input.recipient,
       messageId: input.messageId,
       content: input.content,
-      customFields: input.customFields,
     })
   }
 }

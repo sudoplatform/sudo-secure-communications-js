@@ -183,6 +183,11 @@
       "until": 1772203020,
       "untilISO": "2026-2-28T00:37:00Z",
       "reason": "Waiting for patch - Lodash used by other sudo packages"
+    },
+    "1112659": {
+      "until": 1770851662,
+      "untilISO": "2026-02-11T23:14:22Z",
+      "reason": "Package tar only used for dynamo-db-local"
     }
   }
 }

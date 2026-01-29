@@ -255,13 +255,11 @@ export interface SendTypingNotificationInput {
  * @property {Recipient} recipient The target recipient.
  * @property {string} messageId The identifier of the message to toggle a reaction on.
  * @property {string} content The reaction string to attach to the message.
- * @property {Record<string, any>} customFields Custom fields to attach to the reaction.
  */
 export interface ToggleReactionInput {
   recipient: Recipient
   messageId: string
   content: string
-  customFields?: Record<string, any>
 }
 
 /**

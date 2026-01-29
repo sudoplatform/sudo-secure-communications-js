@@ -1110,6 +1110,12 @@ export class MatrixClientManager {
           // Convert Matrix event to Message entity
           const message = messageTransformer.fromMatrixToEntity(userId, event)
           if (message) {
+            if (
+              message?.content?.type === 'unknown' &&
+              !message.content.isEdited
+            ) {
+              return undefined
+            }
             message.senderHandle.name =
               room.getMember(message.senderHandle.handleId.toString())?.name ??
               ''
@@ -1372,7 +1378,6 @@ export class MatrixClientManager {
     roomId: string,
     eventId: string,
     reaction: string,
-    customFields?: Record<string, any>,
   ): Promise<void> {
     this.log.debug(this.toggleReaction.name, { roomId, eventId, reaction })
 
@@ -1383,6 +1388,10 @@ export class MatrixClientManager {
       }
       const userId = await this.getUserId()
       const events = room.getLiveTimeline()?.getEvents() ?? []
+      const originalEventSenderId = room.findEventById(eventId)?.getSender()
+      if (!originalEventSenderId) {
+        this.log.error('original event sender not found', { eventId, roomId })
+      }
       // Find existing reaction event from the current user
       const existingReaction = events.find(
         (event) =>
@@ -1403,8 +1412,8 @@ export class MatrixClientManager {
             event_id: eventId,
             key: reaction,
           },
-          ...customFields,
-        })
+          'com.sudoplatform.relates_to_sender': originalEventSenderId,
+        } as any)
       }
     } catch (err) {
       const msg = 'Failed to toggle reaction'
