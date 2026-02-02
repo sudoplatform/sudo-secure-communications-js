@@ -1477,10 +1477,15 @@ export class MatrixClientManager {
         throw new RoomNotFoundError()
       }
       const events = room.getLiveTimeline()?.getEvents()
-      const latestEvent = events?.[0]
+      const latestEvent = events.at(-1)
       if (!latestEvent) {
         throw new Error('Latest event could not be found')
       }
+      const latestEventId = latestEvent.getId()
+      if (!latestEventId) {
+        throw new Error('Latest event id could not be fetched')
+      }
+      await this.client.setRoomReadMarkers(roomId, latestEventId, latestEvent)
       await this.client.sendReadReceipt(latestEvent)
     } catch (err) {
       const msg = 'Failed to send read receipt'

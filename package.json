@@ -103,7 +103,7 @@
     "debug": "^4.3.4",
     "ua-parser-js": "^1.0.35",
     "json5": "^2.2.3",
-    "fast-xml-parser": "^4.1.2",
+    "fast-xml-parser": "^5.3.3",
     "form-data": "^3.0.4",
     "semver": "^7.5.2",
     "@babel/helpers": "^7.26.10",
@@ -188,6 +188,11 @@
       "until": 1770851662,
       "untilISO": "2026-02-11T23:14:22Z",
       "reason": "Package tar only used for dynamo-db-local"
+    },
+    "1112686": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "eslint advisory - suppress until eslint can be upgraded to >=9.26.0"
     }
   }
 }
