@@ -6,6 +6,7 @@
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { IEncryptedFile, decryptAttachment } from 'matrix-encrypt-attachment'
+import { ClientEvent } from 'matrix-js-sdk/lib/client'
 import {
   CryptoApi,
   CryptoEvent,
@@ -91,8 +92,13 @@ import { MessageTransformer } from '../messaging/transformer/messageTransformer'
 import { SearchMessagesItemTransformer } from '../messaging/transformer/searchMessagesItemTransformer'
 import { RoomPowerLevelsTransformer } from '../rooms/transformer/roomPowerLevelsTransformer'
 
+const SLIDING_SYNC_LIST_KEY = 'rooms'
 const SLIDING_SYNC_TIMEOUT_MS = 30000
 const SLIDING_SYNC_TIMELINE_LIMIT = 20
+const SLIDING_SYNC_INITIAL_ROOM_LIST_SIZE = 100
+const SLIDING_SYNC_EXTEND_WITHIN = 5
+const SLIDING_SYNC_EXTEND_BY = 50
+const SLIDING_SYNC_ROOM_SUBSCRIBE_WAIT_MS = 35000
 const SLIDING_SYNC_REQUIRED_STATE = [
   [EventType.RoomName, ''],
   [EventType.RoomAvatar, ''],
@@ -151,6 +157,8 @@ export class MatrixClientManager {
     privateKey: Uint8Array
   } = undefined
   private slidingSync?: SlidingSync = undefined
+  private slidingSyncListRangeEnd = SLIDING_SYNC_INITIAL_ROOM_LIST_SIZE - 1
+  private slidingSyncExtendListener?: (room: Room) => void
 
   public constructor(
     accessToken: string,
@@ -217,7 +225,7 @@ export class MatrixClientManager {
     this.accessToken = accessToken
   }
 
-  // MARK: Session / Syncing
+  // MARK: Session/Syncing
 
   public isUsingToken(token: string): boolean {
     return token === this.accessToken
@@ -256,44 +264,75 @@ export class MatrixClientManager {
     this.log.debug(this.startSyncing.name)
 
     try {
-      // Check whether the server supports sliding sync feature. If not, fallback to legacy sync
-      const isSlidingSyncSupported = await this.isSlidingSyncSupported()
-      let slidingSync: SlidingSync | undefined = undefined
-
-      if (isSlidingSyncSupported) {
-        const lists = new Map<string, MSC3575List>()
-        lists.set('rooms', {
-          ranges: [[0, 19]], // Load first 20 rooms initially
-          sort: ['by_notification_level', 'by_recency'],
-          required_state: [...SLIDING_SYNC_REQUIRED_STATE],
-          timeline_limit: SLIDING_SYNC_TIMELINE_LIMIT,
-        })
-        const roomSubscriptionInfo = {
-          required_state: [...SLIDING_SYNC_REQUIRED_STATE],
-          timeline_limit: SLIDING_SYNC_TIMELINE_LIMIT,
-        }
-        const proxyBaseUrl = this.client.getHomeserverUrl()
-        slidingSync = new SlidingSync(
-          proxyBaseUrl,
-          lists,
-          roomSubscriptionInfo,
-          this.client,
-          SLIDING_SYNC_TIMEOUT_MS,
+      const useSlidingSync = await this.isSlidingSyncSupported()
+      if (useSlidingSync) {
+        this.log.debug(
+          `Sliding sync is supported by the server, using SSS. SLIDING_SYNC_INITIAL_ROOM_LIST_SIZE=${SLIDING_SYNC_INITIAL_ROOM_LIST_SIZE}`,
+        )
+        this.slidingSyncListRangeEnd = SLIDING_SYNC_INITIAL_ROOM_LIST_SIZE - 1
+        this.slidingSync = this.createSlidingSyncInstance()
+        this.slidingSyncExtendListener =
+          this.extendSlidingSyncListIfNearLimit.bind(this)
+        this.client.on(ClientEvent.Room, this.slidingSyncExtendListener)
+      } else {
+        this.log.warn(
+          'Sliding sync is not supported by the server, falling back to legacy sync',
         )
       }
-      this.slidingSync = slidingSync
-      await this.client.startClient({
-        slidingSync: this.slidingSync,
-      })
+      await this.client.startClient({ slidingSync: this.slidingSync })
     } catch (err) {
       this.log.error('Failed to start syncing', { err })
     }
+  }
+
+  private createSlidingSyncInstance(): SlidingSync {
+    const roomSubscriptionInfo = {
+      required_state: [...SLIDING_SYNC_REQUIRED_STATE],
+      timeline_limit: SLIDING_SYNC_TIMELINE_LIMIT,
+    }
+    const lists = new Map<string, MSC3575List>()
+    lists.set(SLIDING_SYNC_LIST_KEY, {
+      ...roomSubscriptionInfo,
+      ranges: [[0, this.slidingSyncListRangeEnd]],
+      sort: ['by_notification_level', 'by_recency'],
+    })
+    return new SlidingSync(
+      this.client.getHomeserverUrl(),
+      lists,
+      roomSubscriptionInfo,
+      this.client,
+      SLIDING_SYNC_TIMEOUT_MS,
+    )
+  }
+
+  private extendSlidingSyncListIfNearLimit(): void {
+    if (!this.slidingSync) return
+    const roomCount = this.client.getRooms().length
+    const limit = this.slidingSyncListRangeEnd + 1
+    const nearLimit = roomCount >= limit - SLIDING_SYNC_EXTEND_WITHIN
+    if (!nearLimit) return
+
+    const newEnd = this.slidingSyncListRangeEnd + SLIDING_SYNC_EXTEND_BY
+    this.slidingSyncListRangeEnd = newEnd
+    this.slidingSync.setListRanges(SLIDING_SYNC_LIST_KEY, [[0, newEnd]])
+    this.log.debug('Extending sliding sync list range', {
+      roomCount,
+      from: limit - 1,
+      to: newEnd,
+    })
   }
 
   public async stopSyncing(): Promise<void> {
     this.log.debug(this.stopSyncing.name)
 
     try {
+      if (this.slidingSyncExtendListener) {
+        this.client.removeListener(
+          ClientEvent.Room,
+          this.slidingSyncExtendListener,
+        )
+        this.slidingSyncExtendListener = undefined
+      }
       await Promise.resolve(this.client.stopClient())
       this.slidingSync = undefined
     } catch (err) {
@@ -572,13 +611,41 @@ export class MatrixClientManager {
     this.log.debug(this.getRoom.name, { id })
 
     try {
-      const result = await Promise.resolve(this.client.getRoom(id))
-      return result ?? undefined
+      let room: Room | null | undefined = this.client.getRoom(id)
+      if (room) return room
+      if (this.slidingSync) {
+        const subs = this.slidingSync.getRoomSubscriptions()
+        this.log.debug(`Adding room ${id} to SSS subscriptions`, { subs })
+        subs.add(id)
+        this.slidingSync.modifyRoomSubscriptions(subs)
+        room = await this.waitForRoomAfterSubscribe(id)
+      }
+      return room ?? undefined
     } catch (err) {
       const msg = 'Failed to retrieve a room'
       this.log.error(msg, { err })
       throw new Error(msg)
     }
+  }
+
+  private waitForRoomAfterSubscribe(roomId: string): Promise<Room | undefined> {
+    const existing = this.client.getRoom(roomId)
+    if (existing) {
+      return Promise.resolve(existing)
+    }
+    return new Promise((resolve) => {
+      const onRoom = (room: Room) => {
+        if (room.roomId !== roomId) return
+        clearTimeout(timeoutId)
+        this.client.removeListener(ClientEvent.Room, onRoom)
+        resolve(room)
+      }
+      const timeoutId = setTimeout(() => {
+        this.client.removeListener(ClientEvent.Room, onRoom)
+        resolve(this.client.getRoom(roomId) ?? undefined)
+      }, SLIDING_SYNC_ROOM_SUBSCRIBE_WAIT_MS)
+      this.client.on(ClientEvent.Room, onRoom)
+    })
   }
 
   public async getRoomType(
