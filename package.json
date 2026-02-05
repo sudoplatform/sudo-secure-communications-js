@@ -16,12 +16,13 @@
     "lint:prettier": "prettier -l \"{bin,test,src}/**/*.{js,json,jsx,ts,tsx,yml}\"",
     "codegen": "graphql-codegen -c codegen.yml",
     "verify": "true",
-    "unit-test": "jest --passWithNoTests --verbose test/unit",
-    "integration-test": "jest --passWithNoTests --verbose test/integration",
-    "integration-test-smoke": "jest --passWithNoTests --verbose test/integration/smoke",
+    "unit-test": "yarn build:inject-version && jest --passWithNoTests --verbose test/unit",
+    "integration-test": "yarn build:inject-version && jest --passWithNoTests --verbose test/integration",
+    "integration-test-smoke": "yarn build:inject-version && jest --passWithNoTests --verbose test/integration/smoke",
     "smoketest": "yarn unit-test && yarn integration-test-smoke",
     "clean": "rm -rf ./docs ./lib ./cjs ./types ./vendor",
-    "build": "yarn codegen && yarn lint && yarn build:bundle-matrix-sdk && yarn build:transpile && yarn build:rewrite-imports && yarn build:docs",
+    "build": "yarn codegen && yarn build:inject-version && yarn lint && yarn build:bundle-matrix-sdk && yarn build:transpile && yarn build:rewrite-imports && yarn build:docs",
+    "build:inject-version": "node scripts/inject-sdk-version.js",
     "build:rewrite-imports": "node scripts/rewrite-matrix-imports.js",
     "build:transpile": "concurrently \"yarn build:transpile:declarations\" \"yarn build:transpile:cjs\" \"yarn build:transpile:esm\"",
     "build:transpile:declarations": "tsc --project tsconfig.declarations.json",
@@ -195,6 +196,16 @@
       "reason": "eslint advisory - suppress until eslint can be upgraded to >=9.26.0"
     },
     "1112818": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "eslint advisory - suppress until eslint can be upgraded"
+    },
+    "1112862": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "eslint advisory - suppress until eslint can be upgraded"
+    },
+    "1112954": {
       "until": 1772203020,
       "untilISO": "2026-02-28T00:37:00Z",
       "reason": "eslint advisory - suppress until eslint can be upgraded"

@@ -56,6 +56,7 @@ import {
 } from 'matrix-js-sdk/lib/types'
 import { getSecureCommsServiceConfig } from './config'
 import { MatrixClient, createClient } from './matrixTypes'
+import { SUDO_PLATFORM_SCS_SDK_VERSION } from '../../../gen/sdkVersion'
 import {
   EventListenerContent,
   EventListenerReaction,
@@ -186,6 +187,10 @@ export class MatrixClientManager {
         headers.set('User-Agent', 'SecureCommTest/1.0.0 Node')
       }
       headers.set('Authorization', `Bearer ${this.accessToken}`)
+      headers.set(
+        'X-SudoPlatform-SCS-SDK',
+        `JavaScript/${SUDO_PLATFORM_SCS_SDK_VERSION}`,
+      )
       const authInit: RequestInit = {
         ...init,
         headers,

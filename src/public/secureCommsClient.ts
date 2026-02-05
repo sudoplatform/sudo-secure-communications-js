@@ -176,6 +176,9 @@ export type SecureCommsClientOptions = {
 
   /** AutoRefreshTokenMinutesBeforeExpiration to use. Default is 5 minutes. Set to 0 to disable automatic token refresh. */
   autoRefreshTokenMinutesBeforeExpiration?: number
+
+  /** Enable crypto. Default is false. */
+  enableCrypto?: boolean
 }
 
 export class DefaultSecureCommsClient implements SecureCommsClient {
@@ -234,6 +237,7 @@ export class DefaultSecureCommsClient implements SecureCommsClient {
       this.sessionService,
       this.storage,
       opts.autoRefreshTokenMinutesBeforeExpiration ?? 5,
+      opts.enableCrypto ?? false,
     )
 
     this.mediaCredentialService = new DefaultMediaCredentialService(

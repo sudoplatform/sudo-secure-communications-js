@@ -29,6 +29,7 @@ export class SessionManager {
     private readonly sessionService: SessionService,
     private readonly storageModule: StorageModule,
     private readonly autoRefreshTokenMinutesBeforeExpiration: number,
+    private readonly enableCrypto: boolean = false,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
@@ -399,29 +400,35 @@ export class SessionManager {
   ): Promise<MatrixClientManager> {
     const client = new MatrixClientManager(token, decoded, handleStorage)
 
-    if (typeof indexedDB !== 'undefined') {
-      // use indexedDB if available (i.e., in browser or Node with polyfill)
-      const rustCryptoOptions = {
-        useIndexedDB: true,
-        cryptoDatabasePrefix: `matrix-js-sdk:${handleId}`,
-        storagePassword: storePassphrase,
-      }
-      try {
-        await client.initRustCrypto(rustCryptoOptions)
-      } catch (error) {
-        // Rust crypto may fail to init due to a changed device ID.
-        // Clear rust crypto store to start fresh.
-        indexedDB.deleteDatabase(`matrix-js-sdk:${handleId}::matrix-sdk-crypto`)
-        await client.initRustCrypto(rustCryptoOptions)
-      }
-
-      // startup the matrix store to load persisted matrix data from the database
-      await handleStorage?.matrixStore.startup()
+    if (!this.enableCrypto) {
+      this.log.warn('Crypto is disabled, skipping rust crypto initialization')
     } else {
-      // use memory store
-      await client.initRustCrypto({
-        useIndexedDB: false,
-      } as any)
+      if (typeof indexedDB !== 'undefined') {
+        // use indexedDB if available (i.e., in browser or Node with polyfill)
+        const rustCryptoOptions = {
+          useIndexedDB: true,
+          cryptoDatabasePrefix: `matrix-js-sdk:${handleId}`,
+          storagePassword: storePassphrase,
+        }
+        try {
+          await client.initRustCrypto(rustCryptoOptions)
+        } catch (error) {
+          // Rust crypto may fail to init due to a changed device ID.
+          // Clear rust crypto store to start fresh.
+          indexedDB.deleteDatabase(
+            `matrix-js-sdk:${handleId}::matrix-sdk-crypto`,
+          )
+          await client.initRustCrypto(rustCryptoOptions)
+        }
+
+        // startup the matrix store to load persisted matrix data from the database
+        await handleStorage?.matrixStore.startup()
+      } else {
+        // use memory store
+        await client.initRustCrypto({
+          useIndexedDB: false,
+        } as any)
+      }
     }
 
     await client.signIn()
