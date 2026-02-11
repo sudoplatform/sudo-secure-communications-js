@@ -11,6 +11,7 @@ import { MatrixRoomsService } from '../../../data/rooms/matrixRoomsService'
 import { SessionManager } from '../../../data/session/sessionManager'
 import { ChannelEntity } from '../../entities/channels/channelEntity'
 import { ChannelsService } from '../../entities/channels/channelsService'
+import { RoomEntity } from '../../entities/rooms/roomEntity'
 
 /**
  * Application business logic for listing all channels the handle has an active invitation for.
@@ -29,20 +30,31 @@ export class ListInvitationsUseCase {
     this.log.debug(this.constructor.name, {
       handleId,
     })
-    const roomIds = await this.listInvitedChannels(handleId)
-    if (!roomIds.length) {
+    const rooms = await this.listInvitedChannels(handleId)
+    if (!rooms.length) {
       return []
     }
-    const result = await this.channelsService.list(roomIds)
-    return await processChannelsResult(result, this.channelsService, this.log)
+    const roomIds = rooms.map((room) => room.roomId)
+    const channelInfo = await this.channelsService.list(roomIds)
+    channelInfo.channels = channelInfo.channels.map((channel) => ({
+      ...channel,
+      memberCount:
+        rooms.find((room) => room.roomId === channel.channelId.toString())
+          ?.memberCount ?? 0,
+    }))
+    return await processChannelsResult(
+      channelInfo,
+      this.channelsService,
+      this.log,
+    )
   }
 
-  private async listInvitedChannels(handleId: HandleId): Promise<string[]> {
+  private async listInvitedChannels(handleId: HandleId): Promise<RoomEntity[]> {
     {
       const matrixClient = await this.sessionManager.getMatrixClient(handleId)
       const matrixRoomsService = new MatrixRoomsService(matrixClient)
       const rooms = await matrixRoomsService.listInvitedRooms()
-      return rooms.map((room) => room.roomId)
+      return rooms
     }
   }
 }
