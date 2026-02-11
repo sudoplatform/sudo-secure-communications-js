@@ -13,6 +13,7 @@ export class MessageReactionTransformer {
       content: data.content,
       count: data.count,
       senderHandleIds: data.senderHandleIds,
+      eventIds: data.eventIds,
     }
   }
 
@@ -21,6 +22,7 @@ export class MessageReactionTransformer {
       content: entity.content,
       count: entity.count,
       senderHandleIds: entity.senderHandleIds,
+      eventIds: entity.eventIds,
     }
   }
 }

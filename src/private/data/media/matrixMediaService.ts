@@ -206,17 +206,20 @@ export class MatrixMediaService implements MediaService {
     ): Promise<T> =>
       new Promise((resolve, reject) => {
         element.crossOrigin = 'Anonymous'
+        element.onerror = () => reject(new Error('Failed to load media'))
         element.src = url
         if (element instanceof HTMLVideoElement) {
           element.muted = true
-          element.onloadeddata = () => {
-            element.play().then(() => element.pause())
-            resolve(element)
+          element.onloadedmetadata = () => {
+            element.currentTime = Math.min(
+              1,
+              Math.max(0, element.duration - 0.1),
+            )
           }
+          element.onseeked = () => resolve(element as T)
         } else {
           element.onload = () => resolve(element)
         }
-        element.onerror = () => reject(new Error('Failed to load media'))
       })
 
     if (mimeType.startsWith('image')) {

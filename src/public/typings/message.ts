@@ -85,11 +85,13 @@ export enum MessageState {
  * @property {string} content The reaction content string. This may be an emoji or any other app-specific string.
  * @property {number} count The total number of handles who reacted with this reaction.
  * @property {HandleId[]} senderHandleIds The handle identifiers that reacted with this reaction.
+ * @property {string[]} eventIds The eventIds of the reaction events of this reaction.
  */
 export interface MessageReaction {
   content: string
   count: number
   senderHandleIds: HandleId[]
+  eventIds: string[]
 }
 
 /**

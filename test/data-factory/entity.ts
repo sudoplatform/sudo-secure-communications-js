@@ -287,6 +287,7 @@ export class EntityDataFactory {
     content: 'testEmoji',
     count: 1,
     senderHandleIds: [this.handle.handleId],
+    eventIds: ['testReactionEventId'],
   }
 
   static readonly receipt: MessageReceiptEntity = {

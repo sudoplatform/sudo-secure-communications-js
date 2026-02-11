@@ -407,12 +407,14 @@ export interface UnregisterMessageListenerInput {
  * Event listener emitted contentfor a reaction event.
  *
  * @interface EventListenerReaction
+ * @property {string} eventId The event ID of the reaction.
  * @property {string} content The content of the reaction.
  * @property {string} messageId The message ID of the reaction.
  * @property {number} timestamp The timestamp of the reaction.
  * @property {Handle} senderHandle The sender handle of the reaction.
  */
 export interface EventListenerReaction {
+  eventId: string
   content: string
   messageId: string
   timestamp: number

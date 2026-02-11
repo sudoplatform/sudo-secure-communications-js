@@ -1517,18 +1517,23 @@ export class MatrixClientManager {
         return []
       }
       return reactions.map(([key, events]) => {
+        const nonRedactedEvents = Array.from(events).filter(
+          (event) => !event.isRedacted(),
+        )
         const senderHandleIds = Array.from(
           new Set(
-            Array.from(events)
-              .filter((event) => !event.isRedacted())
-              .map((event) => event.getSender())
-              .filter(Boolean),
+            nonRedactedEvents.map((event) => event.getSender()).filter(Boolean),
           ),
         ).map((id) => new HandleId(id!))
+
+        const eventIds = nonRedactedEvents
+          .map((event) => event.getId())
+          .filter(Boolean) as string[]
         return {
           content: key,
           count: senderHandleIds.length,
           senderHandleIds,
+          eventIds: eventIds,
         }
       })
     } catch (err) {
@@ -2461,9 +2466,11 @@ export class MatrixClientManager {
           break
         case EventType.Reaction:
           try {
+            const reactionEventId = event.getId()
             originalEventId = event.getContent()?.['m.relates_to']?.event_id
             if (!originalEventId) return
             const reaction: EventListenerReaction = {
+              eventId: reactionEventId ?? '',
               content: event.getContent()?.['m.relates_to']?.key ?? '',
               messageId: event.getContent()?.['m.relates_to']?.event_id ?? '',
               timestamp: event.getTs() ?? 0,
