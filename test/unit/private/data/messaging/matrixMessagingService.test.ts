@@ -308,6 +308,7 @@ describe('MatrixMessagingService Test Suite', () => {
         const input: SendMediaInput = {
           recipient: channelId, // unencrypted
           file: new ArrayBuffer(100),
+          caption: 'caption',
           fileName: 'fileName.pdf',
           fileSize: 100,
           fileType: 'application/pdf',
@@ -324,7 +325,8 @@ describe('MatrixMessagingService Test Suite', () => {
         expect(idArg).toStrictEqual<typeof idArg>(channelId.toString())
         expect(contentArg).toStrictEqual<typeof contentArg>({
           msgtype: MsgType.File,
-          body: input.fileName,
+          body: input.caption!,
+          filename: input.fileName,
           info: { mimetype: input.fileType, size: input.fileSize },
           url: mxcUrl,
         })
@@ -335,6 +337,7 @@ describe('MatrixMessagingService Test Suite', () => {
         const input: SendMediaInput = {
           recipient: channelId, // unencrypted
           file: new ArrayBuffer(100),
+          caption: 'caption',
           fileName: 'fileName.pdf',
           fileSize: 100,
           fileType: 'application/pdf',
@@ -356,7 +359,8 @@ describe('MatrixMessagingService Test Suite', () => {
         expect(replyArg).toStrictEqual<typeof replyArg>(replyToMessageId)
         expect(contentArg).toStrictEqual<typeof contentArg>({
           msgtype: MsgType.File,
-          body: input.fileName,
+          body: input.caption!,
+          filename: input.fileName,
           info: { mimetype: input.fileType, size: input.fileSize },
           url: mxcUrl,
         })
@@ -367,6 +371,7 @@ describe('MatrixMessagingService Test Suite', () => {
         const input: SendMediaInput = {
           recipient: channelId, // unencrypted
           file: new ArrayBuffer(100),
+          caption: 'caption',
           fileName: 'fileName.pdf',
           fileSize: 100,
           fileType: 'application/pdf',
@@ -388,7 +393,8 @@ describe('MatrixMessagingService Test Suite', () => {
         expect(threadIdArg).toStrictEqual<typeof threadIdArg>(threadId)
         expect(contentArg).toStrictEqual<typeof contentArg>({
           msgtype: MsgType.File,
-          body: input.fileName,
+          body: input.caption!,
+          filename: input.fileName,
           info: { mimetype: input.fileType, size: input.fileSize },
           url: mxcUrl,
         })
@@ -408,6 +414,7 @@ describe('MatrixMessagingService Test Suite', () => {
       const input: SendMediaInput = {
         recipient: channelId, // unencrypted
         file: new ArrayBuffer(100),
+        caption: 'caption',
         fileName: 'fileName.jpg',
         fileSize: 100,
         fileType: 'image/jpeg', // image will trigger thumbnail generation
@@ -435,7 +442,8 @@ describe('MatrixMessagingService Test Suite', () => {
       expect(idArg).toStrictEqual<typeof idArg>(channelId.toString())
       expect(contentArg).toStrictEqual<typeof contentArg>({
         msgtype: MsgType.Image,
-        body: input.fileName,
+        body: input.caption!,
+        filename: input.fileName,
         info: {
           mimetype: input.fileType,
           size: input.fileSize,
@@ -464,6 +472,7 @@ describe('MatrixMessagingService Test Suite', () => {
       const input: SendMediaInput = {
         recipient: channelId, // unencrypted
         file: new ArrayBuffer(100),
+        caption: 'caption',
         fileName: 'fileName.mp4',
         fileSize: 100,
         fileType: 'video/mp4', // video will trigger thumbnail generation
@@ -491,7 +500,8 @@ describe('MatrixMessagingService Test Suite', () => {
       expect(idArg).toStrictEqual<typeof idArg>(channelId.toString())
       expect(contentArg).toStrictEqual<typeof contentArg>({
         msgtype: MsgType.Video,
-        body: input.fileName,
+        body: input.caption!,
+        filename: input.fileName,
         info: {
           mimetype: input.fileType,
           size: input.fileSize,

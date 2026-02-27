@@ -1229,8 +1229,7 @@ export class MatrixClientManager {
       msgtype: MsgType.Text,
       body: content.body,
       'm.new_content': {
-        msgtype: MsgType.Text,
-        body: content.body,
+        ...content,
       },
       'm.relates_to': {
         rel_type: RelationType.Replace,

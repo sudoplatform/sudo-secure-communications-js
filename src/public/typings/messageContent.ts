@@ -195,11 +195,13 @@ export interface Video extends SelfDestructible {
  * Audio message content.
  * 
  * @interface Audio
+ * @property {string} caption Optional caption text for the video.
  * @property {string} uri The URI of the audio file.
  * @property {AudioMedia} info The audio information.
  * @property {EncryptedFile} encryptedFile The encrypted file information.
  */
 export interface Audio extends SelfDestructible {
+  caption?: string
   uri: string
   info: AudioMedia
   encryptedFile?: EncryptedFile
@@ -209,11 +211,13 @@ export interface Audio extends SelfDestructible {
  * File message content.
  * 
  * @interface File
+ * @property {string} caption Optional caption text for the video.
  * @property {string} uri The URI of the file.
  * @property {FileMedia} info The file information.
  * @property {EncryptedFile} encryptedFile The encrypted file information.
  */
 export interface File extends SelfDestructible {
+  caption?: string
   uri: string
   info: FileMedia
   encryptedFile?: EncryptedFile

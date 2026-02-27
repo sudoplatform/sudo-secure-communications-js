@@ -15,6 +15,7 @@
     "lint:eslint": "eslint \"{bin,test,src}/**/*.{js,json,jsx,ts,tsx}\"",
     "lint:prettier": "prettier -l \"{bin,test,src}/**/*.{js,json,jsx,ts,tsx,yml}\"",
     "codegen": "graphql-codegen -c codegen.yml",
+    "audit-with-suppressions": "yarn dlx -p @anonyome/platform-build-tools audit-with-suppressions",
     "verify": "true",
     "unit-test": "yarn build:inject-version && jest --passWithNoTests --verbose test/unit",
     "integration-test": "yarn build:inject-version && jest --passWithNoTests --verbose test/integration",
@@ -186,9 +187,9 @@
       "reason": "Waiting for patch - Lodash used by other sudo packages"
     },
     "1112659": {
-      "until": 1770851662,
-      "untilISO": "2026-02-11T23:14:22Z",
-      "reason": "Package tar only used for dynamo-db-local"
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "node-tar used by node-gyp - requires tar >=7.5.8"
     },
     "1112686": {
       "until": 1772203020,
@@ -209,6 +210,41 @@
       "until": 1772203020,
       "untilISO": "2026-02-28T00:37:00Z",
       "reason": "eslint advisory - suppress until eslint can be upgraded"
+    },
+    "1113190": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "markdown-it advisory used by typedoc"
+    },
+    "1113300": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "node-tar used by node-gyp"
+    },
+    "1113331": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "fast-xml-parser advisory - suppress until fast-xml-parser >=5.3.6"
+    },
+    "1113371": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "minimatch advisory used by tooling deps (typescript-eslint, eslint-plugin-import, glob, typedoc)"
+    },
+    "1113375": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "node-tar used by node-gyp"
+    },
+    "1113398": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "eslint advisory - suppress until eslint can be upgraded"
+    },
+    "1113407": {
+      "until": 1772203020,
+      "untilISO": "2026-02-28T00:37:00Z",
+      "reason": "fast-xml-parser advisory - suppress until fast-xml-parser can be bumped"
     }
   }
 }

@@ -96,6 +96,8 @@ export interface SendReplyMessageInput {
  * @property {string} fileType The MIME type of the media file.
  * @property {number} fileSize The size of the media file in bytes.
  * @property {MediaCredentialEntity} mediaCredential The media credential for granting client S3 bucket access.
+ * @property {string} caption (Optional) The caption text for the media file.
+ * @property {string} mentions (Optional) The list of mentions in the caption.
  * @property {ArrayBuffer} thumbnail (Optional) The file containing the thumbnail.
  * @property {ThumbnailInfoEntity} thumbnailInfo (Optional) The thumbnail image information.
  * @property {string} threadId (Optional) The message identifier that the new message will be
@@ -114,12 +116,30 @@ export interface SendMediaInput {
   fileType: string
   fileSize: number
   mediaCredential: MediaCredentialEntity
+  caption?: string
+  mentions?: MessageMentionEntity[]
   thumbnail?: ArrayBuffer
   thumbnailInfo?: ThumbnailInfoEntity
   threadId?: string
   replyToMessageId?: string
   clientMessageDuration?: number
   serverMessageDuration?: number
+}
+
+/**
+ * Input for `MessagingService.editMediaCaption` method.
+ *
+ * @interface EditMediaCaptionInput
+ * @property {Recipient} recipient The target recipient.
+ * @property {string} messageId The identifier of the message to edit.
+ * @property {string} message The new caption text that will replace the older caption.
+ * @property {MessageMention[]} mentions The list of mentions in the caption.
+ */
+export interface EditMediaCaptionInput {
+  recipient: Recipient
+  messageId: string
+  message: string
+  mentions: MessageMentionEntity[]
 }
 
 /**

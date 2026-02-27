@@ -5,7 +5,7 @@
  */
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { HandleId, Recipient, ThumbnailInfo } from '../../../../public'
+import { HandleId, Recipient } from '../../../../public'
 import { S3Client } from '../../../data/common/s3Client'
 import { MatrixMediaService } from '../../../data/media/matrixMediaService'
 import { MediaCredentialManager } from '../../../data/media/mediaCredentialManager'
@@ -14,31 +14,22 @@ import { SessionManager } from '../../../data/session/sessionManager'
 import { MessageMentionEntity } from '../../entities/messaging/messageEntity'
 
 /**
- * Input for `SendMediaUseCase`.
+ * Input for `EditMediaCaptionUseCase`.
  *
- * @interface SendMediaUseCaseInput
+ * @interface EditMediaCaptionUseCaseInput
  */
-interface SendMediaUseCaseInput {
+interface EditMediaCaptionUseCaseInput {
   handleId: HandleId
   recipient: Recipient
-  file: ArrayBuffer
-  fileName: string
-  fileType: string
-  fileSize: number
-  caption?: string
+  messageId: string
+  caption: string
   mentions?: MessageMentionEntity[]
-  thumbnail?: ArrayBuffer
-  thumbnailInfo?: ThumbnailInfo
-  threadId?: string
-  replyToMessageId?: string
-  clientMessageDuration?: number
-  serverMessageDuration?: number
 }
 
 /**
- * Application business logic for sending a media message to a recipient.
+ * Application business logic for editing a caption for a media message to a recipient.
  */
-export class SendMediaUseCase {
+export class EditMediaCaptionUseCase {
   private readonly log: Logger
 
   public constructor(
@@ -48,14 +39,14 @@ export class SendMediaUseCase {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  async execute(input: SendMediaUseCaseInput): Promise<void> {
+  async execute(input: EditMediaCaptionUseCaseInput): Promise<void> {
     this.log.debug(this.constructor.name, {
       input,
     })
-    await this.sendMedia(input)
+    await this.editMediaCaption(input)
   }
 
-  async sendMedia(input: SendMediaUseCaseInput): Promise<void> {
+  async editMediaCaption(input: EditMediaCaptionUseCaseInput): Promise<void> {
     const matrixClient = await this.sessionManager.getMatrixClient(
       input.handleId,
     )
@@ -71,21 +62,11 @@ export class SendMediaUseCase {
       matrixClient,
       matrixMediaService,
     )
-    await matrixMessagingService.sendMedia({
+    await matrixMessagingService.editMediaCaption({
       recipient: input.recipient,
-      file: input.file,
-      fileName: input.fileName,
-      fileType: input.fileType,
-      fileSize: input.fileSize,
-      mediaCredential,
-      caption: input.caption,
-      mentions: input.mentions,
-      thumbnail: input.thumbnail,
-      thumbnailInfo: input.thumbnailInfo,
-      threadId: input.threadId,
-      replyToMessageId: input.replyToMessageId,
-      clientMessageDuration: input.clientMessageDuration,
-      serverMessageDuration: input.serverMessageDuration,
+      messageId: input.messageId,
+      message: input.caption,
+      mentions: input.mentions ?? [],
     })
   }
 }

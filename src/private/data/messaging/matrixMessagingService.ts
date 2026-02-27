@@ -7,15 +7,26 @@
 import { encryptAttachment } from 'matrix-encrypt-attachment'
 import { MatrixEvent, MsgType } from 'matrix-js-sdk/lib/matrix'
 import { RoomMessageEventContent } from 'matrix-js-sdk/lib/types'
-import { ChannelId, Recipient, SecureCommsError } from '../../../public'
+import {
+  Audio,
+  ChannelId,
+  File,
+  Image,
+  Recipient,
+  SecureCommsError,
+  Text,
+  Video,
+} from '../../../public'
 import { ChatSummaryEntity } from '../../domain/entities/messaging/chatSummaryEntity'
 import {
   MessageEntity,
+  MessageMentionEntity,
   RedactReasonEntity,
 } from '../../domain/entities/messaging/messageEntity'
 import {
   CreatePollInput,
   DeleteMessageInput,
+  EditMediaCaptionInput,
   EditMessageInput,
   EditPollInput,
   EndPollInput,
@@ -104,6 +115,12 @@ export class MatrixMessagingService implements MessagingService {
     }
   }
 
+  async editMediaCaption(input: EditMediaCaptionInput): Promise<void> {
+    const roomId = input.recipient.value
+    const content = await this.buildMessageContent(input)
+    await this.matrixClient.editMessage(roomId, input.messageId, content)
+  }
+
   async get(input: GetMessageInput): Promise<MessageEntity | undefined> {
     const roomId = input.recipient.value
     const message = await this.matrixClient.getMessage(input.messageId, roomId)
@@ -116,9 +133,23 @@ export class MatrixMessagingService implements MessagingService {
       this.matrixClient.getReadReceipts(roomId, undefined, message.messageId),
     ])
     if (edits.length > 0) {
-      message.content = edits
+      const editedContent = edits
         .sort((a, b) => a.timestamp - b.timestamp)
         .at(-1)!.content
+
+      if (
+        message.content.type === MsgType.Audio ||
+        message.content.type === MsgType.File ||
+        message.content.type === MsgType.Image ||
+        message.content.type === MsgType.Video
+      ) {
+        // Handle media caption editing
+        ;(message.content as Video | Image | Audio | File).caption = (
+          editedContent as Text
+        ).text
+      } else {
+        message.content = editedContent
+      }
       message.content.isEdited = true
     }
     message.reactions = reactions
@@ -160,9 +191,23 @@ export class MatrixMessagingService implements MessagingService {
           ),
         ])
         if (edits.length > 0) {
-          message.content = edits
+          const editedContent = edits
             .sort((a, b) => a.timestamp - b.timestamp)
             .at(-1)!.content
+
+          if (
+            message.content.type === MsgType.Audio ||
+            message.content.type === MsgType.File ||
+            message.content.type === MsgType.Image ||
+            message.content.type === MsgType.Video
+          ) {
+            // Handle media caption editing
+            ;(message.content as Video | Image | Audio | File).caption = (
+              editedContent as Text
+            ).text
+          } else {
+            message.content = editedContent
+          }
           message.content.isEdited = true
         }
         message.reactions = reactions
@@ -251,42 +296,20 @@ export class MatrixMessagingService implements MessagingService {
   }
 
   private async buildMessageContent(
-    input: SendMessageInput | SendThreadMessageInput | SendReplyMessageInput,
+    input:
+      | SendMessageInput
+      | SendThreadMessageInput
+      | SendReplyMessageInput
+      | EditMediaCaptionInput,
   ): Promise<RoomMessageEventContent> {
-    let formattedBody = input.message
-    const userMentions: string[] = []
-    let hasChatMention = false
-
     const roomId = input.recipient.value
 
-    for (const mention of input.mentions) {
-      // Format Handle mention
-      if (mention.type === 'Handle') {
-        const matrixUserId = `@${mention.handleId}:${this.matrixClient.homeServer}`
-        const displayName = `@${mention.name}`
-        const href = `https://matrix.to/#/${matrixUserId}`
+    const { formattedBody, userMentions, hasChatMention } = this.handleMentions(
+      input.message,
+      input.mentions,
+      roomId,
+    )
 
-        // Escape the display name
-        const escapedDisplayName = displayName.replace(
-          /[-/\\^$*+?.()|[\]{}]/g,
-          '\\$&',
-        )
-        const regex = new RegExp(escapedDisplayName, 'g')
-        formattedBody = formattedBody.replace(
-          regex,
-          `<a href="${href}">${displayName}</a>`,
-        )
-        userMentions.push(matrixUserId)
-      } else {
-        // Format Chat mention
-        const chatTag = '@chat'
-        formattedBody = formattedBody.replace(
-          new RegExp(chatTag, 'g'),
-          `<a href="https://matrix.to/#/${roomId}">${chatTag}</a>`,
-        )
-        hasChatMention = true
-      }
-    }
     // Construct the final content
     const content: RoomMessageEventContent = {
       body: input.message,
@@ -336,9 +359,25 @@ export class MatrixMessagingService implements MessagingService {
   ): Promise<RoomMessageEventContent> {
     const content = {
       msgtype: msgType,
-      body: input.fileName,
+      body: input.caption ?? '',
+      filename: input.fileName,
       info: {},
     } as RoomMessageEventContent
+
+    // handle formatted caption
+    const { formattedBody, userMentions, hasChatMention } = this.handleMentions(
+      input.caption ?? '',
+      input.mentions ?? [],
+      input.recipient.value,
+    )
+    if (userMentions.length > 0 || hasChatMention) {
+      ;(content as any).format = 'org.matrix.custom.html'
+      ;(content as any).formatted_body = formattedBody
+      ;(content as any)['m.mentions'] = {
+        user_ids: userMentions,
+        ...(hasChatMention ? { room: true } : {}),
+      }
+    }
 
     // handle thumbnail
     if (input.thumbnail) {
@@ -385,9 +424,25 @@ export class MatrixMessagingService implements MessagingService {
   ): Promise<RoomMessageEventContent> {
     const content = {
       msgtype: msgType,
-      body: input.fileName,
+      body: input.caption ?? '',
+      filename: input.fileName,
       info: {},
     } as RoomMessageEventContent
+
+    // handle formatted caption
+    const { formattedBody, userMentions, hasChatMention } = this.handleMentions(
+      input.caption ?? '',
+      input.mentions ?? [],
+      input.recipient.value,
+    )
+    if (userMentions.length > 0 || hasChatMention) {
+      ;(content as any).format = 'org.matrix.custom.html'
+      ;(content as any).formatted_body = formattedBody
+      ;(content as any)['m.mentions'] = {
+        user_ids: userMentions,
+        ...(hasChatMention ? { room: true } : {}),
+      }
+    }
 
     // handle thumbnail
     if (input.thumbnail) {
@@ -447,6 +502,51 @@ export class MatrixMessagingService implements MessagingService {
       case 'unknown':
         return 'Redacted for unknown reason'
     }
+  }
+
+  private handleMentions(
+    message: string,
+    mentions: MessageMentionEntity[],
+    roomId: string,
+  ): {
+    formattedBody: string
+    userMentions: string[]
+    hasChatMention: boolean
+  } {
+    let formattedBody = message
+    const userMentions: string[] = []
+    let hasChatMention = false
+
+    for (const mention of mentions) {
+      // Format Handle mention
+      if (mention.type === 'Handle') {
+        const matrixUserId = `@${mention.handleId}:${this.matrixClient.homeServer}`
+        const displayName = `@${mention.name}`
+        const href = `https://matrix.to/#/${matrixUserId}`
+
+        // Escape the display name
+        const escapedDisplayName = displayName.replace(
+          /[-/\\^$*+?.()|[\]{}]/g,
+          '\\$&',
+        )
+        const regex = new RegExp(escapedDisplayName, 'g')
+        formattedBody = formattedBody.replace(
+          regex,
+          `<a href="${href}">${displayName}</a>`,
+        )
+        userMentions.push(matrixUserId)
+      } else {
+        // Format Chat mention
+        const chatTag = '@chat'
+        formattedBody = formattedBody.replace(
+          new RegExp(chatTag, 'g'),
+          `<a href="https://matrix.to/#/${roomId}">${chatTag}</a>`,
+        )
+        hasChatMention = true
+      }
+    }
+
+    return { formattedBody, userMentions, hasChatMention }
   }
 
   async createPoll(input: CreatePollInput): Promise<void> {

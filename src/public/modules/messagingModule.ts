@@ -16,6 +16,7 @@ import { SearchMessagesItemTransformer } from '../../private/data/messaging/tran
 import { SessionManager } from '../../private/data/session/sessionManager'
 import { CreatePollUseCase } from '../../private/domain/use-cases/messaging/createPollUseCase'
 import { DeleteMessageUseCase } from '../../private/domain/use-cases/messaging/deleteMessageUseCase'
+import { EditMediaCaptionUseCase } from '../../private/domain/use-cases/messaging/editMediaCaptionUseCase'
 import { EditMessageUseCase } from '../../private/domain/use-cases/messaging/editMessageUseCase'
 import { EditPollUseCase } from '../../private/domain/use-cases/messaging/editPollUseCase'
 import { EndPollUseCase } from '../../private/domain/use-cases/messaging/endPollUseCase'
@@ -202,6 +203,8 @@ export interface DeleteMessageInput {
  * @property {string} fileName The name of the media file.
  * @property {string} fileType The MIME type of the media file.
  * @property {number} fileSize The size of the media file in bytes.
+ * @property {string} caption (Optional) The caption text for the media file.
+ * @property {MessageMention[]} mentions (Optional) The list of mentions in the caption.
  * @property {ArrayBuffer} thumbnail (Optional) The file containing the thumbnail.
  * @property {ThumbnailInfo} thumbnailInfo (Optional) The thumbnail image information.
  * @property {string} threadId (Optional) Required for thread messages. The message identifier
@@ -222,12 +225,32 @@ export interface SendMediaInput {
   fileName: string
   fileType: string
   fileSize: number
+  caption?: string
+  mentions?: MessageMention[]
   thumbnail?: ArrayBuffer
   thumbnailInfo?: ThumbnailInfo
   threadId?: string
   replyToMessageId?: string
   clientMessageDuration?: number
   serverMessageDuration?: number
+}
+
+/**
+ * Properties required to edit an existing caption for a media attachment.
+ *
+ * @interface EditMediaCaptionInput
+ * @property {HandleId} handleId Identifier of the handle owned by this client.
+ * @property {Recipient} recipient The target recipient.
+ * @property {string} messageId The identifier of the message to edit.
+ * @property {string} caption The new caption text that will replace the older caption.
+ * @property {MessageMention[]} mentions (Optional) The list of mentions in the caption.
+ */
+export interface EditMediaCaptionInput {
+  handleId: HandleId
+  recipient: Recipient
+  messageId: string
+  caption: string
+  mentions: MessageMention[]
 }
 
 /**
@@ -523,6 +546,14 @@ export interface MessagingModule {
   sendMedia(input: SendMediaInput): Promise<void>
 
   /**
+   * Edits the caption for an existing media attachment that has been sent to a recipient.
+   * The original message is replaced by the edited message for all members of the chat.
+   *
+   * @param {EditMediaCaptionInput} input Parameters used to edit a caption for a media attachment.
+   */
+  editMediaCaption(input: EditMediaCaptionInput): Promise<void>
+
+  /**
    * Toggles a reaction for an existing message. All members of the chat will have visibility of the reaction.
    *
    * @param {ToggleReactionInput} input Parameters used to toggle a reaction.
@@ -786,6 +817,17 @@ export class DefaultMessagingModule implements MessagingModule {
       input,
     })
     const useCase = new SendMediaUseCase(
+      this.sessionManager,
+      this.mediaCredentialManager,
+    )
+    await useCase.execute(input)
+  }
+
+  async editMediaCaption(input: EditMediaCaptionInput): Promise<void> {
+    this.log.debug(this.editMediaCaption.name, {
+      input,
+    })
+    const useCase = new EditMediaCaptionUseCase(
       this.sessionManager,
       this.mediaCredentialManager,
     )

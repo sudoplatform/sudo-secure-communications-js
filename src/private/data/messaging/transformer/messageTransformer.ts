@@ -345,13 +345,14 @@ export class MessageTransformer {
 
   private getImageContent(content: IContent): Image {
     return {
+      caption: content.body,
       uri: content.url,
       info: {
         mimeType: content.info?.mimetype,
         size: content.info?.size,
         width: content.info?.w,
         height: content.info?.h,
-        filename: content.body || 'image',
+        filename: content.fileName ?? 'image',
       },
       thumbnailUri: content.info?.thumbnail_url,
       thumbnailInfo: {
@@ -376,11 +377,12 @@ export class MessageTransformer {
 
   private getFileContent(content: IContent): File {
     return {
+      caption: content.body,
       uri: content.url,
       info: {
         mimeType: content.info?.mimetype,
         size: content.info?.size,
-        filename: content.body || 'file',
+        filename: content.fileName ?? 'file',
       },
       encryptedFile: content.file
         ? {
@@ -396,12 +398,13 @@ export class MessageTransformer {
 
   private getAudioContent(content: IContent): Audio {
     return {
+      caption: content.caption,
       uri: content.url,
       info: {
         mimeType: content.info?.mimetype,
         size: content.info?.size,
         duration: content.info?.duration,
-        filename: content.body || 'audio',
+        filename: content.fileName ?? 'audio',
       },
       encryptedFile: content.file
         ? {
@@ -417,6 +420,7 @@ export class MessageTransformer {
 
   private getVideoContent(content: IContent): Video {
     return {
+      caption: content.body,
       uri: content.url,
       info: {
         mimeType: content.info?.mimetype,
@@ -424,7 +428,7 @@ export class MessageTransformer {
         width: content.info?.w,
         height: content.info?.h,
         duration: content.info?.duration,
-        filename: content.body || 'video',
+        filename: content.fileName ?? 'video',
       },
       thumbnailUri: content.info?.thumbnail_url,
       thumbnailInfo: {

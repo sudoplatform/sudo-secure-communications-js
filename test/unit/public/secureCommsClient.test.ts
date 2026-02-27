@@ -84,6 +84,7 @@ import { UpdateHandleUseCase } from '../../../src/private/domain/use-cases/handl
 import { DownloadMediaFileUseCase } from '../../../src/private/domain/use-cases/media/downloadMediaFileUseCase'
 import { CreatePollUseCase } from '../../../src/private/domain/use-cases/messaging/createPollUseCase'
 import { DeleteMessageUseCase } from '../../../src/private/domain/use-cases/messaging/deleteMessageUseCase'
+import { EditMediaCaptionUseCase } from '../../../src/private/domain/use-cases/messaging/editMediaCaptionUseCase'
 import { EditMessageUseCase } from '../../../src/private/domain/use-cases/messaging/editMessageUseCase'
 import { EditPollUseCase } from '../../../src/private/domain/use-cases/messaging/editPollUseCase'
 import { EndPollUseCase } from '../../../src/private/domain/use-cases/messaging/endPollUseCase'
@@ -511,6 +512,11 @@ jest.mock(
 )
 const JestMockSendReplyMessageUseCase =
   SendReplyMessageUseCase as jest.MockedClass<typeof SendReplyMessageUseCase>
+jest.mock(
+  '../../../src/private/domain/use-cases/messaging/editMediaCaptionUseCase',
+)
+const JestMockEditMediaCaptionUseCase =
+  EditMediaCaptionUseCase as jest.MockedClass<typeof EditMediaCaptionUseCase>
 jest.mock('../../../src/private/domain/use-cases/messaging/editMessageUseCase')
 const JestMockEditMessageUseCase = EditMessageUseCase as jest.MockedClass<
   typeof EditMessageUseCase
@@ -782,6 +788,7 @@ describe('SecureCommsClient Test Suite', () => {
   const mockSendMessageUseCase = mock<SendMessageUseCase>()
   const mockSendThreadMessageUseCase = mock<SendThreadMessageUseCase>()
   const mockSendReplyMessageUseCase = mock<SendReplyMessageUseCase>()
+  const mockEditMediaCaptionUseCase = mock<EditMediaCaptionUseCase>()
   const mockEditMessageUseCase = mock<EditMessageUseCase>()
   const mockDeleteMessageUseCase = mock<DeleteMessageUseCase>()
   const mockSendMediaUseCase = mock<SendMediaUseCase>()
@@ -915,6 +922,7 @@ describe('SecureCommsClient Test Suite', () => {
     reset(mockSendMessageUseCase)
     reset(mockSendThreadMessageUseCase)
     reset(mockSendReplyMessageUseCase)
+    reset(mockEditMediaCaptionUseCase)
     reset(mockEditMessageUseCase)
     reset(mockDeleteMessageUseCase)
     reset(mockSendMediaUseCase)
@@ -1262,6 +1270,9 @@ describe('SecureCommsClient Test Suite', () => {
     )
     JestMockSendReplyMessageUseCase.mockImplementation(() =>
       instance(mockSendReplyMessageUseCase),
+    )
+    JestMockEditMediaCaptionUseCase.mockImplementation(() =>
+      instance(mockEditMediaCaptionUseCase),
     )
     JestMockEditMessageUseCase.mockImplementation(() =>
       instance(mockEditMessageUseCase),
@@ -4086,6 +4097,55 @@ describe('SecureCommsClient Test Suite', () => {
             }),
           ).resolves.not.toThrow()
         })
+      })
+    })
+
+    describe('editMediaCaption', () => {
+      const recipient = new HandleId(v4())
+      const messageId = 'messageId'
+      const caption = 'Editing a caption'
+      beforeEach(() => {
+        when(mockEditMediaCaptionUseCase.execute(anything())).thenResolve()
+      })
+      it('generates use case', async () => {
+        await instanceUnderTest.messaging.editMediaCaption({
+          handleId: new HandleId(''),
+          recipient,
+          messageId,
+          caption,
+          mentions: [],
+        })
+        expect(JestMockEditMediaCaptionUseCase).toHaveBeenCalledTimes(1)
+      })
+      it('calls use case as expected', async () => {
+        const handleId = new HandleId('handleId')
+        await instanceUnderTest.messaging.editMediaCaption({
+          handleId,
+          recipient,
+          messageId,
+          caption,
+          mentions: [],
+        })
+        verify(mockEditMediaCaptionUseCase.execute(anything())).once()
+        const [args] = capture(mockEditMediaCaptionUseCase.execute).first()
+        expect(args).toEqual({
+          handleId,
+          recipient,
+          messageId,
+          caption,
+          mentions: [],
+        })
+      })
+      it('completes successfully', async () => {
+        await expect(
+          instanceUnderTest.messaging.editMediaCaption({
+            handleId: new HandleId(''),
+            recipient,
+            messageId,
+            caption,
+            mentions: [],
+          }),
+        ).resolves.not.toThrow()
       })
     })
 
