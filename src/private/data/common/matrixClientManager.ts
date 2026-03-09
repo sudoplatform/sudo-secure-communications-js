@@ -1049,13 +1049,23 @@ export class MatrixClientManager {
   ): Promise<void> {
     this.log.debug(this.sendThreadMessage.name, { roomId, threadId, content })
 
+    const room = await this.getRoom(roomId)
+    if (!room) {
+      throw new RoomNotFoundError()
+    }
+    const originalEventSenderId = room.findEventById(threadId)?.getSender()
+    if (!originalEventSenderId) {
+      this.log.error('original event sender not found', { threadId, roomId })
+    }
+
     const eventContent = {
       ...content,
       'm.relates_to': {
         rel_type: 'm.thread',
         event_id: threadId,
       },
-    } as RoomMessageEventContent
+      'com.sudoplatform.relates_to_sender': originalEventSenderId,
+    } as unknown as RoomMessageEventContent
     try {
       await this.client.sendMessage(roomId, eventContent)
     } catch (err) {
@@ -1076,12 +1086,27 @@ export class MatrixClientManager {
       content,
     })
 
+    const room = await this.getRoom(roomId)
+    if (!room) {
+      throw new RoomNotFoundError()
+    }
+    const originalEventSenderId = room
+      .findEventById(replyToMessageId)
+      ?.getSender()
+    if (!originalEventSenderId) {
+      this.log.error('original event sender not found', {
+        replyToMessageId,
+        roomId,
+      })
+    }
+
     const eventContent = {
       ...content,
       'm.relates_to': {
         'm.in_reply_to': { event_id: replyToMessageId },
       },
-    } as RoomMessageEventContent
+      'com.sudoplatform.relates_to_sender': originalEventSenderId,
+    } as unknown as RoomMessageEventContent
     try {
       await this.client.sendEvent(roomId, EventType.RoomMessage, eventContent)
     } catch (err) {
