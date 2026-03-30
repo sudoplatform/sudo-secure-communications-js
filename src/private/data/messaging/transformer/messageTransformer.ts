@@ -141,12 +141,18 @@ export class MessageTransformer {
       }
     }
 
-    if (eventContent['m.relates_to']?.['rel_type'] === 'm.thread') {
+    if (
+      eventType !== EventType.RoomMessage &&
+      eventContent['m.relates_to']?.['rel_type'] === 'm.thread'
+    ) {
       ;(mappedContent as BaseMessageContent).threadId =
         eventContent['m.relates_to']?.event_id
     }
 
-    if (eventContent['m.relates_to']?.['m.in_reply_to']) {
+    if (
+      eventType !== EventType.RoomMessage &&
+      eventContent['m.relates_to']?.['m.in_reply_to']
+    ) {
       ;(mappedContent as BaseMessageContent).repliedToMessageId =
         eventContent['m.relates_to']?.['m.in_reply_to'].event_id
     }
@@ -262,15 +268,46 @@ export class MessageTransformer {
     eventContent: IContent,
   ): MessageContent {
     let content = eventContent
-    if (content['m.new_content']) {
-      // this is a replacement event, so we need to use the new content
-      content = content['m.new_content']
+    let isEdited = false
+    let threadId: string | undefined
+    let repliedToMessageId: string | undefined
+
+    // Extract thread and reply metadata from the original event content
+    const relatesTo = content['m.relates_to']
+
+    if (relatesTo?.['rel_type'] === 'm.replace') {
+      // This is an edit/replacement event
+      isEdited = true
+
+      // The new content may itself relate to a thread
+      // Check the new content's m.relates_to for thread info
+      const newContent = content['m.new_content']
+      const newContentRelatesTo = newContent?.['m.relates_to']
+      if (newContentRelatesTo?.['rel_type'] === 'm.thread') {
+        threadId = newContentRelatesTo?.event_id
+      }
+      if (newContentRelatesTo?.['m.in_reply_to']) {
+        repliedToMessageId = newContentRelatesTo?.['m.in_reply_to']?.event_id
+      }
+      content = newContent
+    } else {
+      // Not an edit, check for thread/reply metadata directly
+      if (relatesTo?.['rel_type'] === 'm.thread') {
+        threadId = relatesTo?.event_id
+      }
+      if (relatesTo?.['m.in_reply_to']) {
+        repliedToMessageId = relatesTo?.['m.in_reply_to']?.event_id
+      }
     }
-    const contentType = content.msgtype
+
+    const contentType = content?.msgtype
     let mappedContent: MessageContent = {
       type: contentType ?? 'unknown',
-      isEdited: false,
+      isEdited,
+      ...(threadId && { threadId }),
+      ...(repliedToMessageId && { repliedToMessageId }),
     }
+
     switch (contentType) {
       case MsgType.Text:
         mappedContent = {
@@ -336,7 +373,9 @@ export class MessageTransformer {
         )
         mappedContent = {
           type: contentType ?? 'unknown',
-          isEdited: false,
+          isEdited,
+          ...(threadId && { threadId }),
+          ...(repliedToMessageId && { repliedToMessageId }),
         } as BaseMessageContent
         break
     }

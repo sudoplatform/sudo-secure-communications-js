@@ -179,43 +179,73 @@ export class MatrixMessagingService implements MessagingService {
       input.limit,
       input.nextToken,
     )
-    listOutput.messages = await Promise.all(
-      listOutput.messages.map(async (message) => {
-        const [edits, reactions, receipts] = await Promise.all([
-          this.matrixClient.getReplacements(roomId, message.messageId),
-          this.matrixClient.getReactions(roomId, message.messageId),
-          this.matrixClient.getReadReceipts(
-            roomId,
-            new MatrixEvent({ event_id: message.messageId }),
-            message.messageId,
-          ),
-        ])
-        if (edits.length > 0) {
-          const editedContent = edits
-            .sort((a, b) => a.timestamp - b.timestamp)
-            .at(-1)!.content
 
-          if (
-            message.content.type === MsgType.Audio ||
-            message.content.type === MsgType.File ||
-            message.content.type === MsgType.Image ||
-            message.content.type === MsgType.Video
-          ) {
-            // Handle media caption editing
-            ;(message.content as Video | Image | Audio | File).caption = (
-              editedContent as Text
-            ).text
-          } else {
-            message.content = editedContent
-          }
-          message.content.isEdited = true
+    // Helper to apply edits, reactions and receipts to a message
+    const processMessage = async (
+      message: MessageEntity,
+    ): Promise<MessageEntity> => {
+      const [edits, reactions, receipts] = await Promise.all([
+        this.matrixClient.getReplacements(roomId, message.messageId),
+        this.matrixClient.getReactions(roomId, message.messageId),
+        this.matrixClient.getReadReceipts(
+          roomId,
+          new MatrixEvent({ event_id: message.messageId }),
+          message.messageId,
+        ),
+      ])
+      if (edits.length > 0) {
+        const latestEdit = edits
+          .sort((a, b) => a.timestamp - b.timestamp)
+          .at(-1)!
+        // Preserve threadId when applying edit to a thread message
+        const existingThreadId = (message.content as any).threadId
+        if (
+          message.content.type === MsgType.Audio ||
+          message.content.type === MsgType.File ||
+          message.content.type === MsgType.Image ||
+          message.content.type === MsgType.Video
+        ) {
+          // Handle media caption editing
+          ;(message.content as Video | Image | Audio | File).caption = (
+            latestEdit.content as Text
+          ).text
+        } else {
+          message.content = latestEdit.content
         }
-        message.reactions = reactions
-        message.receipts = receipts
-        return message
-      }),
+        message.content.isEdited = true
+
+        if (existingThreadId) {
+          ;(message.content as any).threadId = existingThreadId
+        }
+      }
+      message.reactions = reactions
+      message.receipts = receipts
+      return message
+    }
+
+    // Process main timeline messages
+    const processedMainMessages = await Promise.all(
+      listOutput.messages.map(processMessage),
     )
-    return listOutput
+    // Process thread messages
+    const processedThreads: Record<string, MessageEntity[]> = {}
+    for (const [threadId, threadMessages] of Object.entries(
+      listOutput.threads ?? {},
+    )) {
+      processedThreads[threadId] = await Promise.all(
+        threadMessages.map(processMessage),
+      )
+    }
+    // Flatten and sort all messages by timestamp oldest to newest
+    const allMessages = [
+      ...processedMainMessages,
+      ...Object.values(processedThreads).flat(),
+    ].sort((a, b) => a.timestamp - b.timestamp)
+
+    return {
+      messages: allMessages,
+      nextToken: listOutput.nextToken,
+    }
   }
 
   async searchMessages(

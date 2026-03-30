@@ -81,10 +81,7 @@ import {
   MessageReactionEntity,
   MessageReceiptEntity,
 } from '../../domain/entities/messaging/messageEntity'
-import {
-  ListMessagesOutput,
-  SearchMessagesOutput,
-} from '../../domain/entities/messaging/messagingService'
+import { SearchMessagesOutput } from '../../domain/entities/messaging/messagingService'
 import { PollResponsesEntity } from '../../domain/entities/messaging/pollEntity'
 import { CustomRoomType } from '../../domain/entities/rooms/roomEntity'
 import { DirectChatPowerLevelsTransformer } from '../directChats/transformer/directChatPowerLevelsTransformer'
@@ -132,6 +129,12 @@ interface RoomMemberOutput {
   userId: string
   displayName?: string
   membership?: string
+}
+
+interface ListMessagesOutput {
+  messages: MessageEntity[]
+  threads: Record<string, MessageEntity[]>
+  nextToken?: string
 }
 
 // Logger interface extension
@@ -1193,46 +1196,69 @@ export class MatrixClientManager {
         chunk.forEach((event) => {
           messageEvents.push(event)
         })
+
         await Promise.all(
           messageEvents.map(async (message) => {
-            if (message.isEncrypted())
+            if (message.isEncrypted()) {
               await this.client.decryptEventIfNeeded(message)
+            }
           }),
         )
         nextToken = response.end
         if (!nextToken) break
       } while (messageEvents.length < limit)
-      const messages = messageEvents
-        .map((event) => {
-          // Convert Matrix event to Message entity
-          const message = messageTransformer.fromMatrixToEntity(userId, event)
-          if (message) {
-            if (
-              message?.content?.type === 'unknown' &&
-              !message.content.isEdited
-            ) {
-              return undefined
-            }
-            message.senderHandle.name =
-              room.getMember(message.senderHandle.handleId.toString())?.name ??
-              ''
-            if (event.getType() === EventType.RoomMember) {
-              ;(message.content as MembershipChange).handle.name =
-                room.getMember(
-                  (
-                    message.content as MembershipChange
-                  ).handle.handleId.toString(),
-                )?.name ?? ''
-            }
+
+      // Separate messages into main timeline and thread messages
+      const mainMessages: MessageEntity[] = []
+      const threads: Record<string, MessageEntity[]> = {}
+
+      for (const event of messageEvents) {
+        const message = messageTransformer.fromMatrixToEntity(userId, event)
+        if (!message) {
+          continue
+        }
+        if (message.content.type === 'unknown' && !message.content.isEdited) {
+          continue
+        }
+        message.senderHandle.name =
+          room.getMember(message.senderHandle.handleId.toString())?.name ?? ''
+
+        if (event.getType() === EventType.RoomMember) {
+          ;(message.content as MembershipChange).handle.name =
+            room.getMember(
+              (message.content as MembershipChange).handle.handleId.toString(),
+            )?.name ?? ''
+        }
+
+        // Route message to thread or main timeline
+        const threadId = (message.content as any).threadId
+        if (threadId) {
+          // Deduplicate within threads
+          const threadMessages = (threads[threadId] ??= [])
+          const existingIndex = threadMessages.findIndex(
+            (m) => m.messageId === message.messageId,
+          )
+          if (existingIndex === -1) {
+            threadMessages.push(message)
+          } else {
+            threadMessages[existingIndex] = message
           }
-          return message
-        })
-        .filter((msg): msg is MessageEntity => Boolean(msg))
-        // Sort messages from oldest to newest
-        .sort((a, b) => a.timestamp - b.timestamp)
+        } else {
+          // Deduplicate within main timeline
+          const existingIndex = mainMessages.findIndex(
+            (m) => m.messageId === message.messageId,
+          )
+          if (existingIndex === -1) {
+            mainMessages.push(message)
+          } else {
+            mainMessages[existingIndex] = message
+          }
+        }
+      }
 
       return {
-        messages,
+        messages: mainMessages,
+        threads,
         nextToken,
       }
     } catch (err) {

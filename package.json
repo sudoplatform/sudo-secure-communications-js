@@ -105,7 +105,7 @@
     "debug": "^4.3.4",
     "ua-parser-js": "^1.0.35",
     "json5": "^2.2.3",
-    "fast-xml-parser": "^5.3.4",
+    "fast-xml-parser": "^5.5.6",
     "form-data": "^3.0.4",
     "semver": "^7.5.2",
     "@babel/helpers": "^7.26.10",
@@ -117,7 +117,9 @@
     "@whatwg-node/fetch": "0.9.0",
     "micromatch": "^4.0.8",
     "base-x": "^5.0.1",
-    "tmp": "^0.2.5"
+    "tmp": "^0.2.5",
+    "tar": "^7.5.9",
+    "flatted": "^3.4.1"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^6.0.0",
@@ -166,45 +168,10 @@
   },
   "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8",
   "auditSuppressions": {
-    "1111987": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "Waiting for patch - @smithy/config-resolver"
-    },
-    "1112255": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "node-tar used by bufferutil by websocket"
-    },
-    "1112329": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "node-tar used by bufferutil by websocket"
-    },
     "1112455": {
       "until": 1775026799,
       "untilISO": "2026-03-31T23:59:59Z",
       "reason": "Waiting for patch - Lodash used by other sudo packages"
-    },
-    "1112659": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "node-tar used by node-gyp - requires tar >=7.5.8"
-    },
-    "1112686": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "eslint advisory - suppress until eslint can be upgraded to >=9.26.0"
-    },
-    "1112818": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "eslint advisory - suppress until eslint can be upgraded"
-    },
-    "1112862": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "eslint advisory - suppress until eslint can be upgraded"
     },
     "1112954": {
       "until": 1775026799,
@@ -215,36 +182,6 @@
       "until": 1775026799,
       "untilISO": "2026-03-31T23:59:59Z",
       "reason": "markdown-it advisory used by typedoc"
-    },
-    "1113300": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "node-tar used by node-gyp"
-    },
-    "1113331": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "fast-xml-parser advisory - suppress until fast-xml-parser >=5.3.6"
-    },
-    "1113371": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "minimatch advisory used by tooling deps (typescript-eslint, eslint-plugin-import, glob, typedoc)"
-    },
-    "1113375": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "node-tar used by node-gyp"
-    },
-    "1113398": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "eslint advisory - suppress until eslint can be upgraded"
-    },
-    "1113407": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "fast-xml-parser advisory - suppress until fast-xml-parser can be bumped"
     },
     "1113459": {
       "until": 1775026799,
@@ -291,35 +228,20 @@
       "untilISO": "2026-03-31T23:59:59Z",
       "reason": "minimatch ReDoS extglobs - transitive via glob"
     },
-    "1113568": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "fast-xml-parser entity encoding bypass - transitive via @aws-sdk/xml-builder"
-    },
-    "1113569": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "fast-xml-parser DoS via entity expansion - transitive via @aws-sdk/xml-builder"
-    },
     "1113714": {
       "until": 1775026799,
       "untilISO": "2026-03-31T23:59:59Z",
       "reason": "ajv ReDoS via $data - transitive via eslint"
     },
-    "1113977": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "http-proxy-agenty - suppress low severity advisory"
+    "1115541": {
+      "until": 1777618799,
+      "untilISO": "2026-04-30T23:59:59Z",
+      "reason": "brace-expansion DoS - suppress low severity advisory"
     },
-    "1114153": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "fast-xml-parser stack overflow in XMLBuilder - transitive via @aws-sdk/xml-builder"
-    },
-    "1114200": {
-      "until": 1775026799,
-      "untilISO": "2026-03-31T23:59:59Z",
-      "reason": "tar hardlink path traversal - transitive via node-gyp"
+    "1115556": {
+      "until": 1777618799,
+      "untilISO": "2026-04-30T23:59:59Z",
+      "reason": "yaml stack overflow via deeply nested collections - suppress low severity advisory"
     }
   }
 }

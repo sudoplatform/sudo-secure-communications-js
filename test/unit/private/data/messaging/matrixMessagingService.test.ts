@@ -798,6 +798,7 @@ describe('MatrixMessagingService Test Suite', () => {
         ),
       ).thenResolve({
         messages: [EntityDataFactory.partialMessage],
+        threads: {},
         nextToken: undefined,
       })
       when(
@@ -861,6 +862,7 @@ describe('MatrixMessagingService Test Suite', () => {
         ),
       ).thenResolve({
         messages: [EntityDataFactory.partialMessage],
+        threads: {},
         nextToken: undefined,
       })
       when(
@@ -937,6 +939,7 @@ describe('MatrixMessagingService Test Suite', () => {
           EntityDataFactory.partialMessage,
           { ...EntityDataFactory.partialMessage, messageId: 'testMessageId2' },
         ],
+        threads: {},
         nextToken: undefined,
       })
       when(
@@ -1007,6 +1010,7 @@ describe('MatrixMessagingService Test Suite', () => {
         ),
       ).thenResolve({
         messages: [],
+        threads: {},
         nextToken: undefined,
       })
 
