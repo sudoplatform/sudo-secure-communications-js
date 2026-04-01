@@ -17,11 +17,16 @@
   "moduleNameMapper": {
     "^@matrix-org/matrix-sdk-crypto-wasm$": "<rootDir>/node_modules/@matrix-org/matrix-sdk-crypto-wasm/node.cjs"
   },
-  "globals": {
-    "ts-jest": {
-      "tsconfig": "tsconfig.test.json"
-    }
+  "transform": {
+    "^.+\\.[tj]sx?$": [
+      "ts-jest",
+      {
+        "tsconfig": "tsconfig.test.json"
+      }
+    ]
   },
   "testRunner": "jest-jasmine2",
-  "transformIgnorePatterns": ["node_modules/(?!(matrix-js-sdk)/)"]
+  "transformIgnorePatterns": [
+    "node_modules/(?!(matrix-js-sdk|p-retry|is-network-error|uuid)/)"
+  ]
 }

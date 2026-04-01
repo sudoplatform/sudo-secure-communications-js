@@ -1,5 +1,17 @@
+diff --git a/node_modules/matrix-js-sdk/lib/sliding-sync.d.ts b/node_modules/matrix-js-sdk/lib/sliding-sync.d.ts
+index 9cda67d..d783c5e 100644
+--- a/node_modules/matrix-js-sdk/lib/sliding-sync.d.ts
++++ b/node_modules/matrix-js-sdk/lib/sliding-sync.d.ts
+@@ -44,6 +44,7 @@ export interface MSC3575SlidingSyncRequest {
+     room_subscriptions?: Record<string, MSC3575RoomSubscription>;
+     extensions?: object;
+     txn_id?: string;
++    conn_id: string;
+     pos?: string;
+     timeout?: number;
+     clientTimeout?: number;
 diff --git a/node_modules/matrix-js-sdk/lib/sliding-sync.js b/node_modules/matrix-js-sdk/lib/sliding-sync.js
-index 7a8dbf6..5e1b62e 100644
+index 7a8dbf6..8cfd6bc 100644
 --- a/node_modules/matrix-js-sdk/lib/sliding-sync.js
 +++ b/node_modules/matrix-js-sdk/lib/sliding-sync.js
 @@ -19,6 +19,7 @@ limitations under the License.

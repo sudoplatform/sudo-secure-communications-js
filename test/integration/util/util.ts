@@ -58,3 +58,6 @@ export const isHandleExpectedMembershipInGroup = async (
   )
   expect(targetMember?.membership).toBe(membership)
 }
+
+export const runTestsIfNotIntegrationLive =
+  process.env.INTEGRATION_LIVE !== 'true' ? describe : describe.skip

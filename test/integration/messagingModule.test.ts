@@ -27,6 +27,7 @@ import { setupSecureCommsClient } from './util/secureCommsClientLifecycle'
 import {
   isHandleExpectedMembershipInChannel,
   isHandleExpectedMembershipInGroup,
+  runTestsIfNotIntegrationLive,
 } from './util/util'
 
 describe('SecureCommsClient MessagingModule Test Suite', () => {
@@ -95,7 +96,7 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
     await userClient2.reset()
   })
 
-  describe('Send Messages in Channel', () => {
+  runTestsIfNotIntegrationLive('Send Messages in Channel', () => {
     describe('sendMessage, getMessages and searchMessages', () => {
       it('send and retrieve messages between two handles in a channel successfully', async () => {
         const inviterHandleName = `test_inviter_handle_${v4()}`
@@ -1182,7 +1183,7 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
     })
   })
 
-  describe('Timeline Listeners', () => {
+  runTestsIfNotIntegrationLive('Timeline Listeners', () => {
     it('timeline listeners should be called when new message is received', async () => {
       const inviterHandleName = `test_inviter_handle_${v4()}`
       inviterHandle = await client1.handles.provisionHandle({
