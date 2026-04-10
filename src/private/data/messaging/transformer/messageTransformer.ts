@@ -391,7 +391,7 @@ export class MessageTransformer {
         size: content.info?.size,
         width: content.info?.w,
         height: content.info?.h,
-        filename: content.fileName ?? 'image',
+        filename: content.filename ?? content.fileName ?? 'image',
       },
       thumbnailUri: content.info?.thumbnail_url,
       thumbnailInfo: {
@@ -421,7 +421,7 @@ export class MessageTransformer {
       info: {
         mimeType: content.info?.mimetype,
         size: content.info?.size,
-        filename: content.fileName ?? 'file',
+        filename: content.filename ?? content.fileName ?? 'file',
       },
       encryptedFile: content.file
         ? {
@@ -443,7 +443,7 @@ export class MessageTransformer {
         mimeType: content.info?.mimetype,
         size: content.info?.size,
         duration: content.info?.duration,
-        filename: content.fileName ?? 'audio',
+        filename: content.filename ?? content.fileName ?? 'audio',
       },
       encryptedFile: content.file
         ? {
@@ -467,7 +467,7 @@ export class MessageTransformer {
         width: content.info?.w,
         height: content.info?.h,
         duration: content.info?.duration,
-        filename: content.fileName ?? 'video',
+        filename: content.filename ?? content.fileName ?? 'video',
       },
       thumbnailUri: content.info?.thumbnail_url,
       thumbnailInfo: {

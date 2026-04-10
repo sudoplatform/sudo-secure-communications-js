@@ -318,6 +318,11 @@
       "untilISO": "2026-04-30T23:59:59Z",
       "reason": "fast-xml-parser stack overflow in XMLBuilder - transitive via @aws-sdk/xml-builder"
     },
+    "1114158": {
+      "until": 1777593599,
+      "untilISO": "2026-04-30T23:59:59Z",
+      "reason": "immutable prototype pollution - suppress low severity advisory"
+    },
     "1114200": {
       "until": 1777593599,
       "untilISO": "2026-04-30T23:59:59Z",
