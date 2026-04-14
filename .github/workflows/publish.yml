@@ -80,9 +80,6 @@ jobs:
           yarn smoketest
         working-directory: ${{ env.PACKAGE_DIR }}
 
-      - name: Ensure latest npm
-        run: npm install -g npm@latest
-
       - name: Publish package via Trusted Publishing
         run: npm publish --provenance --access public 
         working-directory: ${{ env.PACKAGE_DIR }}
