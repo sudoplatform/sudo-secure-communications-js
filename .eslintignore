@@ -3,4 +3,4 @@ lib
 document
 gen
 graphql
-
+**/*.json

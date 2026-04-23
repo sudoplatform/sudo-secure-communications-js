@@ -10,7 +10,6 @@ module.exports = {
     {
       parser: '@typescript-eslint/parser',
       files: ['src/**/*.ts'],
-      excludedFiles: ['test/**/*.ts'],
       plugins: ['@typescript-eslint', 'tree-shaking'],
       extends: [
         'plugin:@typescript-eslint/recommended',

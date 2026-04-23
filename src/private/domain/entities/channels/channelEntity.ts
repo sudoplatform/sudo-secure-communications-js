@@ -5,6 +5,7 @@
  */
 
 import { ChannelId } from '../../../../public'
+import { HandleEntity } from '../handle/handleEntity'
 
 /**
  * Core entity representation of a channel business rule.
@@ -22,6 +23,7 @@ import { ChannelId } from '../../../../public'
  * @property {number} memberCount The number of joined members of the channel.
  * @property {Date} createdAt Date for when the channel was created.
  * @property {Date} updatedAt Date for when the channel was last updated.
+ * @property {HandleEntity} inviter Optional handle of the inviter.
  */
 export interface ChannelEntity {
   channelId: ChannelId
@@ -35,6 +37,7 @@ export interface ChannelEntity {
   memberCount: number
   createdAt: Date
   updatedAt: Date
+  inviter?: HandleEntity
 }
 
 /**

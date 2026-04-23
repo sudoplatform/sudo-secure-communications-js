@@ -26,6 +26,7 @@ import { GetMessagesUseCase } from '../../private/domain/use-cases/messaging/get
 import { GetPinnedMessagesUseCase } from '../../private/domain/use-cases/messaging/getPinnedMessagesUseCase'
 import { GetPollResponsesUseCase } from '../../private/domain/use-cases/messaging/getPollResponsesUseCase'
 import { MarkAsReadUseCase } from '../../private/domain/use-cases/messaging/markAsReadUseCase'
+import { MarkAsUnreadUseCase } from '../../private/domain/use-cases/messaging/markAsUnreadUseCase'
 import { PinUnpinMessageUseCase } from '../../private/domain/use-cases/messaging/pinUnpinMessageUseCase'
 import { SearchMessagesUseCase } from '../../private/domain/use-cases/messaging/searchMessagesUseCase'
 import { SendMediaUseCase } from '../../private/domain/use-cases/messaging/sendMediaUseCase'
@@ -110,6 +111,18 @@ export interface GetChatSummariesInput {
  * @property {Recipient} recipient The target recipient.
  */
 export interface MarkAsReadInput {
+  handleId: HandleId
+  recipient: Recipient
+}
+
+/**
+ * Properties required to mark the chat with a recipient as unread.
+ *
+ * @interface MarkAsUnreadInput
+ * @property {HandleId} handleId Identifier of the handle owned by this client.
+ * @property {Recipient} recipient The target recipient.
+ */
+export interface MarkAsUnreadInput {
   handleId: HandleId
   recipient: Recipient
 }
@@ -509,6 +522,13 @@ export interface MessagingModule {
   markAsRead(input: MarkAsReadInput): Promise<void>
 
   /**
+   * Marks the chat with a recipient as unread.
+   *
+   * @param {MarkAsUnreadInput} input Parameters used to mark messages as unread.
+   */
+  markAsUnread(input: MarkAsUnreadInput): Promise<void>
+
+  /**
    * Sends a typing notification for this handle.
    *
    * @param {SendTypingNotificationInput} input Parameters used to send a typing notification.
@@ -736,6 +756,17 @@ export class DefaultMessagingModule implements MessagingModule {
       input,
     })
     const useCase = new MarkAsReadUseCase(this.sessionManager)
+    await useCase.execute({
+      handleId: input.handleId,
+      recipient: input.recipient,
+    })
+  }
+
+  async markAsUnread(input: MarkAsUnreadInput): Promise<void> {
+    this.log.debug(this.markAsUnread.name, {
+      input,
+    })
+    const useCase = new MarkAsUnreadUseCase(this.sessionManager)
     await useCase.execute({
       handleId: input.handleId,
       recipient: input.recipient,

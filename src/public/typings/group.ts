@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Handle } from './handle'
 import { GroupId } from './recipient'
 
 /**
@@ -18,6 +19,7 @@ import { GroupId } from './recipient'
  * @property {GroupPermissions} permissions Optional permissions describing what roles can perform
  *  certain actions within the group.
  * @property {number} memberCount The number of joined members of the group.
+ * @property {Handle} inviter Optional handle of the inviter.
  */
 export interface Group {
   groupId: GroupId
@@ -26,6 +28,7 @@ export interface Group {
   avatarUrl?: string
   permissions?: GroupPermissions
   memberCount: number
+  inviter?: Handle
 }
 
 /**

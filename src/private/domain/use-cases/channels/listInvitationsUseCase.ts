@@ -5,13 +5,12 @@
  */
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { processChannelsResult } from './getChannelsUseCase'
 import { HandleId } from '../../../../public'
 import { MatrixRoomsService } from '../../../data/rooms/matrixRoomsService'
 import { SessionManager } from '../../../data/session/sessionManager'
+import { toHandleId } from '../../../util/id'
 import { ChannelEntity } from '../../entities/channels/channelEntity'
 import { ChannelsService } from '../../entities/channels/channelsService'
-import { RoomEntity } from '../../entities/rooms/roomEntity'
 
 /**
  * Application business logic for listing all channels the handle has an active invitation for.
@@ -30,31 +29,45 @@ export class ListInvitationsUseCase {
     this.log.debug(this.constructor.name, {
       handleId,
     })
-    const rooms = await this.listInvitedChannels(handleId)
-    if (!rooms.length) {
-      return []
-    }
-    const roomIds = rooms.map((room) => room.roomId)
-    const channelInfo = await this.channelsService.list(roomIds)
-    channelInfo.channels = channelInfo.channels.map((channel) => ({
-      ...channel,
-      memberCount:
-        rooms.find((room) => room.roomId === channel.channelId.toString())
-          ?.memberCount ?? 0,
-    }))
-    return await processChannelsResult(
-      channelInfo,
-      this.channelsService,
-      this.log,
-    )
+    return await this.listInvitedChannels(handleId)
   }
 
-  private async listInvitedChannels(handleId: HandleId): Promise<RoomEntity[]> {
-    {
-      const matrixClient = await this.sessionManager.getMatrixClient(handleId)
-      const matrixRoomsService = new MatrixRoomsService(matrixClient)
-      const rooms = await matrixRoomsService.listInvitedRooms()
-      return rooms
+  private async listInvitedChannels(
+    handleId: HandleId,
+  ): Promise<ChannelEntity[]> {
+    const matrixClient = await this.sessionManager.getMatrixClient(handleId)
+    const matrixRoomsService = new MatrixRoomsService(matrixClient)
+    const invitedRooms = await matrixRoomsService.listInvitedRooms()
+    const userId = await matrixClient.getUserId()
+
+    const roomIds = invitedRooms.map((room) => room.roomId)
+    const channelsInfo = await this.channelsService.list(roomIds)
+    const invitedChannels: ChannelEntity[] = []
+
+    for (const invitedRoom of invitedRooms) {
+      const channel = channelsInfo?.channels?.find(
+        (channel) => invitedRoom.roomId === channel.channelId.toString(),
+      )
+      if (!channel) {
+        continue
+      }
+      const room = await matrixClient.getRoom(invitedRoom.roomId)
+      if (!room) {
+        continue
+      }
+      const inviterUserId = room.getMember(userId)?.events.member?.getSender()
+      const inviter = inviterUserId
+        ? {
+            handleId: toHandleId(inviterUserId),
+            name: room.getMember(inviterUserId)?.name ?? '',
+          }
+        : undefined
+      invitedChannels.push({
+        ...channel,
+        memberCount: invitedRoom.memberCount ?? 0,
+        inviter: inviter,
+      })
     }
+    return invitedChannels
   }
 }

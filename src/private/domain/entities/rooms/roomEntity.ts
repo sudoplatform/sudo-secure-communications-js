@@ -5,6 +5,7 @@
  */
 
 import { RoomPowerLevelsEntity } from './roomPowerLevelsEntity'
+import { HandleEntity } from '../handle/handleEntity'
 
 /**
  * Core entity representation of a room business rule.
@@ -19,6 +20,7 @@ import { RoomPowerLevelsEntity } from './roomPowerLevelsEntity'
  * @property {RoomPowerLevelsEntity} powerLevels Optional power levels indicating what roles can perform
  *  certain actions within the room.
  * @property {number} memberCount The number of joined members of the room.
+ * @property {HandleEntity} inviter Optional handle of the inviter.
  */
 export interface RoomEntity {
   roomId: string
@@ -29,6 +31,7 @@ export interface RoomEntity {
   avatarUrl?: string
   powerLevels?: RoomPowerLevelsEntity
   memberCount: number
+  inviter?: HandleEntity
 }
 
 /**

@@ -19,6 +19,7 @@ describe('ListInvitationsUseCase Test Suite', () => {
   const mockSessionManager = mock<SessionManager>()
   const mockMatrixClient = {
     getRoom: jest.fn(),
+    getUserId: jest.fn(),
   }
 
   let instanceUnderTest: ListInvitationsUseCase
@@ -26,6 +27,8 @@ describe('ListInvitationsUseCase Test Suite', () => {
   beforeEach(() => {
     reset(mockChannelsService)
     reset(mockSessionManager)
+
+    mockMatrixClient.getUserId.mockResolvedValue('userId')
 
     instanceUnderTest = new ListInvitationsUseCase(
       instance(mockSessionManager),
@@ -47,6 +50,20 @@ describe('ListInvitationsUseCase Test Suite', () => {
             },
           },
         ],
+        getMember: (id: string) => {
+          const inviterId = '@inviterId:host'
+          return id === inviterId
+            ? {
+                name: 'InviterName',
+              }
+            : {
+                events: {
+                  member: {
+                    getSender: () => inviterId,
+                  },
+                },
+              }
+        },
       }
       when(mockSessionManager.getMatrixClient(handleId)).thenResolve(
         mockMatrixClient as any,
@@ -61,18 +78,22 @@ describe('ListInvitationsUseCase Test Suite', () => {
       ;(MatrixRoomsService as unknown as jest.Mock).mockReturnValue(
         mockMatrixRoomsService,
       )
-      when(mockChannelsService.get(anything())).thenResolve(undefined)
+      when(mockChannelsService.list(anything())).thenResolve({
+        channels: [],
+        unprocessedIds: [],
+      })
       mockMatrixClient.getRoom.mockResolvedValue(mockGroup)
 
       const result = await instanceUnderTest['listInvitedGroups'](handleId)
-      expect(result).toEqual([EntityDataFactory.group])
+      expect(result).toEqual([EntityDataFactory.groupInvitation])
 
       expect(mockMatrixRoomsService.listInvitedRooms).toHaveBeenCalledWith()
       expect(mockMatrixClient.getRoom).toHaveBeenCalledWith(groupId)
-      verify(mockChannelsService.get(anything())).once()
+      verify(mockChannelsService.list(anything())).once()
     })
 
     it('Lists groups the handle has an active invitation with an empty result for non GROUP room type', async () => {
+      const handleId = new HandleId('handleId')
       const channelId = EntityDataFactory.channel.channelId.toString()
       const mockMatrixRoomsService = {
         listInvitedRooms: jest
@@ -84,27 +105,36 @@ describe('ListInvitationsUseCase Test Suite', () => {
       ;(MatrixRoomsService as unknown as jest.Mock).mockReturnValue(
         mockMatrixRoomsService,
       )
-      when(mockChannelsService.get(anything())).thenResolve(
-        EntityDataFactory.channel,
+      when(mockSessionManager.getMatrixClient(handleId)).thenResolve(
+        mockMatrixClient as any,
       )
+      when(mockChannelsService.list(anything())).thenResolve({
+        channels: [EntityDataFactory.channel],
+        unprocessedIds: [],
+      })
 
-      const handleId = new HandleId('handleId')
       await expect(instanceUnderTest.execute(handleId)).resolves.toEqual([])
 
       expect(mockMatrixRoomsService.listInvitedRooms).toHaveBeenCalledWith()
-      verify(mockChannelsService.get(anything())).once()
+      verify(mockChannelsService.list(anything())).once()
     })
 
     it('Lists groups the handle has an active invitation with an empty result successfully', async () => {
+      const handleId = new HandleId('handleId')
       const mockMatrixRoomsService = {
         listInvitedRooms: jest.fn().mockResolvedValue([]),
       }
       ;(MatrixRoomsService as unknown as jest.Mock).mockReturnValue(
         mockMatrixRoomsService,
       )
-      when(mockChannelsService.get(anything())).thenResolve(undefined)
+      when(mockSessionManager.getMatrixClient(handleId)).thenResolve(
+        mockMatrixClient as any,
+      )
+      when(mockChannelsService.list(anything())).thenResolve({
+        channels: [],
+        unprocessedIds: [],
+      })
 
-      const handleId = new HandleId('handleId')
       await expect(instanceUnderTest.execute(handleId)).resolves.toEqual([])
 
       expect(mockMatrixRoomsService.listInvitedRooms).toHaveBeenCalledWith()

@@ -94,6 +94,7 @@ import { GetMessagesUseCase } from '../../../src/private/domain/use-cases/messag
 import { GetPinnedMessagesUseCase } from '../../../src/private/domain/use-cases/messaging/getPinnedMessagesUseCase'
 import { GetPollResponsesUseCase } from '../../../src/private/domain/use-cases/messaging/getPollResponsesUseCase'
 import { MarkAsReadUseCase } from '../../../src/private/domain/use-cases/messaging/markAsReadUseCase'
+import { MarkAsUnreadUseCase } from '../../../src/private/domain/use-cases/messaging/markAsUnreadUseCase'
 import { PinUnpinMessageUseCase } from '../../../src/private/domain/use-cases/messaging/pinUnpinMessageUseCase'
 import { SearchMessagesUseCase } from '../../../src/private/domain/use-cases/messaging/searchMessagesUseCase'
 import { SendMediaUseCase } from '../../../src/private/domain/use-cases/messaging/sendMediaUseCase'
@@ -491,6 +492,10 @@ jest.mock('../../../src/private/domain/use-cases/messaging/markAsReadUseCase')
 const JestMockMarkAsReadUseCase = MarkAsReadUseCase as jest.MockedClass<
   typeof MarkAsReadUseCase
 >
+jest.mock('../../../src/private/domain/use-cases/messaging/markAsUnreadUseCase')
+const JestMockMarkAsUnreadUseCase = MarkAsUnreadUseCase as jest.MockedClass<
+  typeof MarkAsUnreadUseCase
+>
 jest.mock(
   '../../../src/private/domain/use-cases/messaging/sendTypingNotificationUseCase',
 )
@@ -783,6 +788,7 @@ describe('SecureCommsClient Test Suite', () => {
   const mockGetChatSummariesUseCase = mock<GetChatSummariesUseCase>()
   const mockSearchMessagesUseCase = mock<SearchMessagesUseCase>()
   const mockMarkAsReadUseCase = mock<MarkAsReadUseCase>()
+  const mockMarkAsUnreadUseCase = mock<MarkAsUnreadUseCase>()
   const mockSendTypingNotificationUseCase =
     mock<SendTypingNotificationUseCase>()
   const mockSendMessageUseCase = mock<SendMessageUseCase>()
@@ -918,6 +924,7 @@ describe('SecureCommsClient Test Suite', () => {
     reset(mockGetChatSummariesUseCase)
     reset(mockSearchMessagesUseCase)
     reset(mockMarkAsReadUseCase)
+    reset(mockMarkAsUnreadUseCase)
     reset(mockSendTypingNotificationUseCase)
     reset(mockSendMessageUseCase)
     reset(mockSendThreadMessageUseCase)
@@ -1024,6 +1031,7 @@ describe('SecureCommsClient Test Suite', () => {
     JestMockGetMessageUseCase.mockClear()
     JestMockGetChatSummariesUseCase.mockClear()
     JestMockMarkAsReadUseCase.mockClear()
+    JestMockMarkAsUnreadUseCase.mockClear()
     JestMockSendTypingNotificationUseCase.mockClear()
     JestMockSendMessageUseCase.mockClear()
     JestMockSendThreadMessageUseCase.mockClear()
@@ -1258,6 +1266,9 @@ describe('SecureCommsClient Test Suite', () => {
     )
     JestMockMarkAsReadUseCase.mockImplementation(() =>
       instance(mockMarkAsReadUseCase),
+    )
+    JestMockMarkAsUnreadUseCase.mockImplementation(() =>
+      instance(mockMarkAsUnreadUseCase),
     )
     JestMockSendTypingNotificationUseCase.mockImplementation(() =>
       instance(mockSendTypingNotificationUseCase),
@@ -3913,6 +3924,41 @@ describe('SecureCommsClient Test Suite', () => {
       it('completes successfully', async () => {
         await expect(
           instanceUnderTest.messaging.markAsRead({
+            handleId: new HandleId(''),
+            recipient,
+          }),
+        ).resolves.not.toThrow()
+      })
+    })
+
+    describe('markAsUnread', () => {
+      const recipient = new HandleId(v4())
+      beforeEach(() => {
+        when(mockMarkAsUnreadUseCase.execute(anything())).thenResolve()
+      })
+      it('generates use case', async () => {
+        await instanceUnderTest.messaging.markAsUnread({
+          handleId: new HandleId(''),
+          recipient,
+        })
+        expect(JestMockMarkAsUnreadUseCase).toHaveBeenCalledTimes(1)
+      })
+      it('calls use case as expected', async () => {
+        const handleId = new HandleId('handleId')
+        await instanceUnderTest.messaging.markAsUnread({
+          handleId,
+          recipient,
+        })
+        verify(mockMarkAsUnreadUseCase.execute(anything())).once()
+        const [args] = capture(mockMarkAsUnreadUseCase.execute).first()
+        expect(args).toEqual({
+          handleId,
+          recipient,
+        })
+      })
+      it('completes successfully', async () => {
+        await expect(
+          instanceUnderTest.messaging.markAsUnread({
             handleId: new HandleId(''),
             recipient,
           }),

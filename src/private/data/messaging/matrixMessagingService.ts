@@ -37,6 +37,7 @@ import {
   ListMessagesInput,
   ListMessagesOutput,
   MarkAsReadInput,
+  MarkAsUnreadInput,
   MessagingService,
   PinUnpinMessageInput,
   SearchMessagesInput,
@@ -270,6 +271,11 @@ export class MatrixMessagingService implements MessagingService {
   async markAsRead(input: MarkAsReadInput): Promise<void> {
     const roomId = input.recipient.value
     await this.matrixClient.sendReadReceipt(roomId)
+  }
+
+  async markAsUnread(input: MarkAsUnreadInput): Promise<void> {
+    const roomId = input.recipient.value
+    await this.matrixClient.markAsUnread(roomId)
   }
 
   async sendTypingNotification(

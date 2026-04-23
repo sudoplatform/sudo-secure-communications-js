@@ -18,6 +18,7 @@ import {
   PublicChannelSearchResultEntity,
 } from '../../src/private/domain/entities/channels/channelEntity'
 import { ChannelInvitationRequestEntity } from '../../src/private/domain/entities/channels/channelInvitationRequestEntity'
+import { AvatarImageMetadataEntity } from '../../src/private/domain/entities/common/avatarImageMetadataEntity'
 import {
   ChannelMemberEntity,
   GroupMemberEntity,
@@ -199,6 +200,14 @@ export class EntityDataFactory {
     memberCount: 0,
   }
 
+  static readonly groupInvitation: GroupEntity = {
+    ...this.group,
+    inviter: {
+      handleId: new HandleId('inviterId'),
+      name: 'InviterName',
+    },
+  }
+
   static readonly groupPermissions: GroupPermissionsEntity = {
     sendMessages: GroupRoleEntity.PARTICIPANT,
     inviteHandles: GroupRoleEntity.PARTICIPANT,
@@ -228,6 +237,14 @@ export class EntityDataFactory {
     memberCount: 0,
     createdAt: new Date(1.0),
     updatedAt: new Date(2.0),
+  }
+
+  static readonly channelInvitation: ChannelEntity = {
+    ...this.channel,
+    inviter: {
+      handleId: new HandleId('inviterId'),
+      name: 'InviterName',
+    },
   }
 
   static readonly channelPermissions: ChannelPermissionsEntity = {
@@ -281,6 +298,10 @@ export class EntityDataFactory {
   static readonly channelSortOrder: ChannelSortOrderEntity = {
     field: ChannelSortFieldEntity.NAME,
     direction: ChannelSortDirectionEntity.ASCENDING,
+  }
+
+  static readonly avatarImageMetadata: AvatarImageMetadataEntity = {
+    mimeType: 'image/png',
   }
 
   static readonly reaction: MessageReactionEntity = {

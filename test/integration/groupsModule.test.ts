@@ -11,7 +11,11 @@ import {
   setupSecureCommsClient,
   setupSudoPlatformConfig,
 } from './util/secureCommsClientLifecycle'
-import { isHandleExpectedMembershipInGroup } from './util/util'
+import {
+  isHandleExpectedMembershipInGroup,
+  runTestsIfNotIntegrationLive,
+  testHandleName,
+} from './util/util'
 import { delay } from '../../src/private/util/delay'
 import {
   ChannelRole,
@@ -60,7 +64,7 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
 
   describe('createGroup, getGroup and getGroups', () => {
     it('creates and retrieves a group successfully', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
@@ -105,7 +109,7 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('creates and retrieves multiple groups successfully', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
@@ -133,7 +137,7 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('lists empty groups for empty ids input', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
@@ -147,7 +151,7 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('lists empty groups for non-existent groups', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
@@ -160,46 +164,48 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
       expect(listedGroups).toHaveLength(0)
     })
 
-    it('should throw an UnacceptableWordsError when attempting to create a group with an unacceptable name', async () => {
-      const handleName = `test_handle_${v4()}`
-      inviterHandle = await client1.handles.provisionHandle({
-        name: handleName,
+    runTestsIfNotIntegrationLive('UnacceptableWordsError tests', () => {
+      it('should throw an UnacceptableWordsError when attempting to create a group with an unacceptable name', async () => {
+        const handleName = testHandleName()
+        inviterHandle = await client1.handles.provisionHandle({
+          name: handleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
+
+        const name = `excludedpartial-${v4()}`
+        const description = 'channel-description'
+        await expect(
+          client1.groups.createGroup({
+            handleId: inviterHandle.handleId,
+            name,
+            description,
+            invitedHandleIds: [],
+          }),
+        ).rejects.toThrow(UnacceptableWordsError)
       })
-      await client1.startSyncing(inviterHandle.handleId)
 
-      const name = `excludedpartial-${v4()}`
-      const description = 'channel-description'
-      await expect(
-        client1.groups.createGroup({
-          handleId: inviterHandle.handleId,
-          name,
-          description,
-          invitedHandleIds: [],
-        }),
-      ).rejects.toThrow(UnacceptableWordsError)
-    })
+      it('should throw an UnacceptableWordsError when attempting to create a group with an unacceptable description', async () => {
+        const handleName = testHandleName()
+        inviterHandle = await client1.handles.provisionHandle({
+          name: handleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
 
-    it('should throw an UnacceptableWordsError when attempting to create a group with an unacceptable description', async () => {
-      const handleName = `test_handle_${v4()}`
-      inviterHandle = await client1.handles.provisionHandle({
-        name: handleName,
+        const name = 'channel-name'
+        const description = `excludedpartial-${v4()}`
+        await expect(
+          client1.groups.createGroup({
+            handleId: inviterHandle.handleId,
+            name,
+            description,
+            invitedHandleIds: [],
+          }),
+        ).rejects.toThrow(UnacceptableWordsError)
       })
-      await client1.startSyncing(inviterHandle.handleId)
-
-      const name = 'channel-name'
-      const description = `excludedpartial-${v4()}`
-      await expect(
-        client1.groups.createGroup({
-          handleId: inviterHandle.handleId,
-          name,
-          description,
-          invitedHandleIds: [],
-        }),
-      ).rejects.toThrow(UnacceptableWordsError)
     })
 
     it('returns undefined for non-existent group when attempting to retrieve a group', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
@@ -216,7 +222,7 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
 
   describe('createGroup, updateGroup and deleteGroup', () => {
     it('creates, updates and deletes a group and returns expected output', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
@@ -258,7 +264,7 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should throw a RoomNotFoundError when an attempting to update a non-existent group', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
@@ -273,34 +279,36 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
       ).rejects.toThrow(RoomNotFoundError)
     })
 
-    it('should throw an UnacceptableWordsError when attempting to update name with unacceptable words', async () => {
-      const handleName = `test_handle_${v4()}`
-      inviterHandle = await client1.handles.provisionHandle({
-        name: handleName,
-      })
-      await client1.startSyncing(inviterHandle.handleId)
+    runTestsIfNotIntegrationLive('UnacceptableWordsError tests', () => {
+      it('should throw an UnacceptableWordsError when attempting to update name with unacceptable words', async () => {
+        const handleName = testHandleName()
+        inviterHandle = await client1.handles.provisionHandle({
+          name: handleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
 
-      const name = `group-${v4()}`
-      const description = 'group-description'
-      const group = await client1.groups.createGroup({
-        handleId: inviterHandle.handleId,
-        name,
-        description,
-        invitedHandleIds: [],
-      })
-      expect(group).toBeDefined()
-
-      await expect(
-        client1.groups.updateGroup({
+        const name = `group-${v4()}`
+        const description = 'group-description'
+        const group = await client1.groups.createGroup({
           handleId: inviterHandle.handleId,
-          groupId: group.groupId,
-          name: { value: `excludedpartial-${v4()}` },
-        }),
-      ).rejects.toThrow(UnacceptableWordsError)
+          name,
+          description,
+          invitedHandleIds: [],
+        })
+        expect(group).toBeDefined()
+
+        await expect(
+          client1.groups.updateGroup({
+            handleId: inviterHandle.handleId,
+            groupId: group.groupId,
+            name: { value: `excludedpartial-${v4()}` },
+          }),
+        ).rejects.toThrow(UnacceptableWordsError)
+      })
     })
 
     it('should throw a HandleNotFoundError when handle attempting to delete a group is not found', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
@@ -325,7 +333,7 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should throw a PermissionDeniedError when handle attempting to delete a group is not an admin', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
@@ -358,13 +366,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should throw a PermissionDeniedError when handle attempting to delete a group does not have a role higher than all members', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -399,13 +407,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
 
   describe('createGroup and leaveGroup', () => {
     it('create and leaves a group successfully', async () => {
-      const handleName = `test_handle_${v4()}`
+      const handleName = testHandleName()
       inviterHandle = await client1.handles.provisionHandle({
         name: handleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -449,13 +457,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
 
   describe(`createGroup, listJoined and invitation lifecycle`, () => {
     it('send and accept invitation and list the groups that the user has joined successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -492,9 +500,15 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
       const invitations = await client2.groups.listInvitations(
         inviteeHandle.handleId,
       )
-      const invitedGroupId = invitations.find(
+
+      const invitation = invitations.find(
         (invite) => invite.groupId.toString() === group.groupId.toString(),
-      )?.groupId
+      )
+      expect(
+        invitation?.inviter?.handleId == inviterHandle.handleId &&
+          invitation?.inviter?.name == inviterHandleName,
+      )
+      const invitedGroupId = invitation?.groupId
       expect(invitedGroupId).not.toBeUndefined()
 
       // Invitee handle accepts the invitation from the inviter handle
@@ -529,13 +543,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('send invitation and decline invitation to join a group successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -591,13 +605,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('send invitation and withdraw invitation successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -650,13 +664,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
 
   describe('updateGroupMemberRole and getGroupMembers', () => {
     it('should update a group members role and retrieve the updated group members successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -707,13 +721,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should throw PermissionDeniedError when handle attempting to update a member role does not have a high enough role', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -743,13 +757,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
 
   describe('kickHandle, banHandle and unbanHandle', () => {
     it('should ban and unbans a handle from a group successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -815,13 +829,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should kick a handle from a group successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -871,13 +885,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should throw PermissionDeniedError when handle attempting to perform kick does not have a high enough role', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -904,13 +918,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should throw PermissionDeniedError when handle attempting to perform ban does not have a high enough role', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -937,13 +951,13 @@ describe('SecureCommsClient GroupsModule Test Suite', () => {
     })
 
     it('should throw PermissionDeniedError when handle attempting to perform an unban does not have a high enough role', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })

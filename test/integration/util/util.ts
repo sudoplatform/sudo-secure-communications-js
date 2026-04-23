@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { v4 } from 'uuid'
 import {
   ChannelId,
   ChatId,
@@ -61,3 +62,22 @@ export const isHandleExpectedMembershipInGroup = async (
 
 export const runTestsIfNotIntegrationLive =
   process.env.INTEGRATION_LIVE !== 'true' ? describe : describe.skip
+
+/**
+ * Returns a unique handle name for testing purposes that has words that are
+ * are expected not to hit the excluded names lists.
+ *
+ * @param qualifier Optional qualifier e.g. "inviter".
+ *
+ * @returns
+ */
+export function testHandleName(qualifier: string = ''): string {
+  if (qualifier.length >= 2) {
+    qualifier =
+      qualifier.slice(0, qualifier.length / 2) +
+      '_' +
+      qualifier.slice(qualifier.length / 2)
+  }
+  const name = `te_st__${qualifier ? `${qualifier}__` : ''}han_dle__${v4()}`
+  return name
+}

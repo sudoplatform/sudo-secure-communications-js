@@ -46,12 +46,18 @@ export class SearchMessagesItemTransformer {
         filename = undefined
         break
     }
+
+    const relatesTo = content['m.relates_to']
+    const body =
+      relatesTo?.rel_type === 'm.replace'
+        ? (content['m.new_content']?.body ?? content.body)
+        : content.body
     return {
       messageId: event.event_id,
       recipient: { value: event.room_id } as Recipient,
       senderHandleId: new HandleId(event.sender),
-      repliedToMessageId: content['m.relates_to']?.['m.in_reply_to']?.event_id,
-      body: content.body,
+      repliedToMessageId: relatesTo?.['m.in_reply_to']?.event_id,
+      body,
       filename,
       mimeType,
       timestamp: event.origin_server_ts,

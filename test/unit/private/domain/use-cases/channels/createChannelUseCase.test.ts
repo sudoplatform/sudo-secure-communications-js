@@ -96,6 +96,7 @@ describe('CreateChannelUseCase Test Suite', () => {
           usersDefault: 100,
         },
         avatarUrl: undefined,
+        avatarImageMetadata: undefined,
       })
       verify(mockChannelsService.create(anything())).once()
     })

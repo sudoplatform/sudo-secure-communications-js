@@ -5,6 +5,7 @@
  */
 
 import {
+  AvatarImageMetadataInput,
   ListSecureCommsPublicChannelsOrdering,
   ListSecureCommsPublicChannelsOrderingDirection,
   ListSecureCommsPublicChannelsOrderingField,
@@ -133,5 +134,9 @@ export class GraphQLDataFactory {
     secretAccessKey: 'secret-access-key',
     sessionToken: 'session-token',
     expiration: 1,
+  }
+
+  static readonly avatarImageMetadata: AvatarImageMetadataInput = {
+    mimeType: 'image/png',
   }
 }

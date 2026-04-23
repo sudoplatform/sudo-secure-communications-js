@@ -39,6 +39,10 @@ export type Scalars = {
   AWSURL: { input: any; output: any }
 }
 
+export type AvatarImageMetadataInput = {
+  mimeType?: InputMaybe<Scalars['String']['input']>
+}
+
 export type BatchPublicSecureCommsChannelInfo = {
   __typename?: 'BatchPublicSecureCommsChannelInfo'
   items: Array<PublicSecureCommsChannelInfo>
@@ -46,6 +50,7 @@ export type BatchPublicSecureCommsChannelInfo = {
 }
 
 export type CreateSecureCommsChannelInput = {
+  avatarImageMetadata?: InputMaybe<AvatarImageMetadataInput>
   avatarImageUrl?: InputMaybe<Scalars['String']['input']>
   creatorHandleId: Scalars['String']['input']
   description?: InputMaybe<Scalars['String']['input']>
@@ -387,6 +392,7 @@ export type UpdateSecureCommsChannelInput = {
 }
 
 export type UpdateSecureCommsChannelSetInput = {
+  avatarImageMetadata?: InputMaybe<AvatarImageMetadataInput>
   avatarImageUrl?: InputMaybe<Scalars['String']['input']>
   description?: InputMaybe<Scalars['String']['input']>
   joinRule?: InputMaybe<SecureCommsChannelJoinRule>

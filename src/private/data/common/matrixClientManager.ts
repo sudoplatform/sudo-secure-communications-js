@@ -1333,6 +1333,10 @@ export class MatrixClientManager {
           throw new RoomNotFoundError()
         }
 
+        const markedUnread =
+          room.getAccountData(EventType.MarkedUnread)?.getContent()?.unread ===
+          true
+
         // Initialize counts
         let unreadCountAll = 0
         let unreadCountMentions = 0
@@ -1347,9 +1351,9 @@ export class MatrixClientManager {
           // If latest event cannot be retrieved then return
           return {
             recipient,
-            hasUnreadMessages: false,
+            hasUnreadMessages: markedUnread,
             unreadCount: {
-              all: unreadCountAll,
+              all: markedUnread ? 1 : unreadCountAll,
               mentions: unreadCountMentions,
             },
             threadUnreadCount,
@@ -1428,11 +1432,14 @@ export class MatrixClientManager {
           latestEvent,
         )
 
+        const effectiveUnreadAll =
+          unreadCountAll > 0 ? unreadCountAll : markedUnread ? 1 : 0
+
         return {
           recipient,
-          hasUnreadMessages: unreadCountAll > 0,
+          hasUnreadMessages: unreadCountAll > 0 || markedUnread,
           unreadCount: {
-            all: unreadCountAll,
+            all: effectiveUnreadAll,
             mentions: unreadCountMentions,
           },
           threadUnreadCount,
@@ -1595,6 +1602,28 @@ export class MatrixClientManager {
 
   // MARK: Read Receipts
 
+  public async markAsUnread(roomId: string): Promise<void> {
+    this.log.debug(this.markAsUnread.name, { roomId })
+
+    try {
+      const room = await this.getRoom(roomId)
+      if (!room) {
+        throw new RoomNotFoundError()
+      }
+      const markedUnreadEvent = room.getAccountData(EventType.MarkedUnread)
+      if (markedUnreadEvent?.getContent()?.unread === true) {
+        return
+      }
+      await this.client.setRoomAccountData(roomId, EventType.MarkedUnread, {
+        unread: true,
+      })
+    } catch (err) {
+      const msg = 'Failed to mark as unread'
+      this.log.error(msg, { err })
+      throw new Error(msg)
+    }
+  }
+
   public async sendReadReceipt(roomId: string): Promise<void> {
     this.log.debug(this.sendReadReceipt.name, { roomId })
 
@@ -1614,6 +1643,13 @@ export class MatrixClientManager {
       }
       await this.client.setRoomReadMarkers(roomId, latestEventId, latestEvent)
       await this.client.sendReadReceipt(latestEvent)
+
+      const markedUnreadEvent = room.getAccountData(EventType.MarkedUnread)
+      if (markedUnreadEvent?.getContent()?.unread === true) {
+        await this.client.setRoomAccountData(roomId, EventType.MarkedUnread, {
+          unread: false,
+        })
+      }
     } catch (err) {
       const msg = 'Failed to send read receipt'
       this.log.error(msg, { err })

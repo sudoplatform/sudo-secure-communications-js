@@ -17,7 +17,7 @@ export class ChannelTransformer {
     const channelJoinRuleTransformer = new ChannelJoinRuleTransformer()
     const channelPermissionsTransformer = new ChannelPermissionsTransformer()
     const channelRoleTransformer = new ChannelRoleTransformer()
-    return {
+    const channel: Channel = {
       channelId: entity.channelId,
       name: entity.name,
       description: entity.description,
@@ -36,6 +36,10 @@ export class ChannelTransformer {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     }
+    if (entity.inviter) {
+      channel.inviter = entity.inviter
+    }
+    return channel
   }
 
   fromGraphQLToEntity(data: ChannelGraphQL): ChannelEntity {

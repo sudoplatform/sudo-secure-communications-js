@@ -257,6 +257,16 @@ export interface MarkAsReadInput {
 }
 
 /**
+ * Input for `MessagingService.markAsUnread` method.
+ *
+ * @interface MarkAsUnreadInput
+ * @property {Recipient} recipient The target recipient.
+ */
+export interface MarkAsUnreadInput {
+  recipient: Recipient
+}
+
+/**
  * Input for `MessagingService.sendTypingNotification` method.
  *
  * @interface SendTypingNotificationInput

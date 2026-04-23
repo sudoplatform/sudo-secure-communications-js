@@ -12,7 +12,7 @@ import { RoomEntity } from '../../../domain/entities/rooms/roomEntity'
 export class GroupTransformer {
   fromEntityToAPI(entity: GroupEntity): Group {
     const groupPermissionsTransformer = new GroupPermissionsTransformer()
-    return {
+    const group: Group = {
       groupId: entity.groupId,
       name: entity.name,
       description: entity.description,
@@ -22,11 +22,15 @@ export class GroupTransformer {
         : undefined,
       memberCount: entity.memberCount,
     }
+    if (entity.inviter) {
+      group.inviter = entity.inviter
+    }
+    return group
   }
 
   fromRoomToEntity(entity: RoomEntity): GroupEntity {
     const groupPermissionsTransformer = new GroupPermissionsTransformer()
-    return {
+    const group: GroupEntity = {
       groupId: new GroupId(entity.roomId),
       name: entity.name,
       description: entity.description,
@@ -38,5 +42,9 @@ export class GroupTransformer {
         : undefined,
       memberCount: entity.memberCount,
     }
+    if (entity.inviter) {
+      group.inviter = entity.inviter
+    }
+    return group
   }
 }

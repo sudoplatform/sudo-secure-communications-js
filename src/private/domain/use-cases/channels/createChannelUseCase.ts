@@ -77,6 +77,7 @@ export class CreateChannelUseCase {
         input.defaultMemberRole,
       ),
       avatarUrl: undefined,
+      avatarImageMetadata: undefined,
     }
     return await this.channelsService.create(request)
   }

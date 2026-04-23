@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Handle } from './handle'
 import { ChannelId } from './recipient'
 
 /**
@@ -23,6 +24,7 @@ import { ChannelId } from './recipient'
  * @property {number} memberCount The number of joined members of the channel.
  * @property {Date} createdAt Date for when the channel was created.
  * @property {Date} updatedAt Date for when the channel was last updated.
+ * @property {Handle} inviter Optional handle of the inviter.
  */
 export interface Channel {
   channelId: ChannelId
@@ -36,6 +38,7 @@ export interface Channel {
   memberCount: number
   createdAt: Date
   updatedAt: Date
+  inviter?: Handle
 }
 
 /**

@@ -9,6 +9,7 @@ import { HandleId } from '../../../../public'
 import { GroupTransformer } from '../../../data/groups/transformer/groupTransformer'
 import { MatrixRoomsService } from '../../../data/rooms/matrixRoomsService'
 import { SessionManager } from '../../../data/session/sessionManager'
+import { toHandleId } from '../../../util/id'
 import { ChannelsService } from '../../entities/channels/channelsService'
 import { GroupEntity } from '../../entities/groups/groupEntity'
 import { RoomEntity } from '../../entities/rooms/roomEntity'
@@ -30,35 +31,48 @@ export class ListInvitationsUseCase {
     this.log.debug(this.constructor.name, {
       handleId,
     })
-    const invitedGroups = await this.listInvitedGroups(handleId)
-    if (!invitedGroups.length) {
-      return []
-    }
-    return invitedGroups
+    return await this.listInvitedGroups(handleId)
   }
 
   private async listInvitedGroups(handleId: HandleId): Promise<GroupEntity[]> {
     const matrixClient = await this.sessionManager.getMatrixClient(handleId)
     const matrixRoomsService = new MatrixRoomsService(matrixClient)
     const invitedRooms = await matrixRoomsService.listInvitedRooms()
+    const userId = await matrixClient.getUserId()
 
+    const roomIds = invitedRooms.map((room) => room.roomId)
+    const channelsInfo = await this.channelsService.list(roomIds)
     const invitedGroups: RoomEntity[] = []
-    for (const room of invitedRooms) {
-      const channel = await this.channelsService.get(room.roomId)
-      if (channel) continue
 
-      const group = await matrixClient.getRoom(room.roomId)
-      if (!group) continue
-
-      const isDirect = group
+    for (const invitedRoom of invitedRooms) {
+      const channel = channelsInfo?.channels?.find(
+        (channel) => invitedRoom.roomId === channel.channelId.toString(),
+      )
+      if (channel) {
+        continue
+      }
+      const room = await matrixClient.getRoom(invitedRoom.roomId)
+      if (!room) {
+        continue
+      }
+      const isDirect = room
         .getMembers()
         .some(
           (member) =>
             member.events.member?.getContent()?.['is_direct'] === true,
         )
-      if (!isDirect) {
-        invitedGroups.push(room)
+      if (isDirect) {
+        continue
       }
+      const inviterUserId = room.getMember(userId)?.events.member?.getSender()
+
+      const inviter = inviterUserId
+        ? {
+            handleId: toHandleId(inviterUserId),
+            name: room.getMember(inviterUserId)?.name ?? '',
+          }
+        : undefined
+      invitedGroups.push({ ...invitedRoom, inviter: inviter })
     }
     const transformer = new GroupTransformer()
     return invitedGroups.map(transformer.fromRoomToEntity)

@@ -12,6 +12,7 @@ import {
   PublicChannelSearchResultEntity,
 } from './channelEntity'
 import { Input } from '../../../../public/secureCommsClient'
+import { AvatarImageMetadataEntity } from '../common/avatarImageMetadataEntity'
 import { PowerLevelsEntity } from '../common/powerLevelsEntity'
 
 /**
@@ -24,8 +25,11 @@ import { PowerLevelsEntity } from '../common/powerLevelsEntity'
  * @property {ChannelJoinRuleEntity} joinRule The rule for joining and whether the channel is searchable.
  * @property {string[]} tags Tags associated with the channel to facilitate searching.
  * @property {string[]} invitedHandleIds The identifiers of the handles to invite immediately when the channel is created.
- * @property {PowerLevelsEntity} powerLevels The minimum levels required to perform each action and the default level of handles in the channel.
+ * @property {PowerLevelsEntity} powerLevels The minimum levels required to perform each action and the default level of
+ *  handles in the channel.
  * @property {string} avatarUrl Optional avatar image URL.
+ * @property {AvatarImageMetadataEntity} avatarImageMetadata Optional metadata associated with the avatar image when
+ *  setting the avatar url.
  */
 export interface CreateChannelInput {
   selfHandleId: string
@@ -36,6 +40,7 @@ export interface CreateChannelInput {
   invitedHandleIds: string[]
   powerLevels?: PowerLevelsEntity
   avatarUrl?: string
+  avatarImageMetadata?: AvatarImageMetadataEntity
 }
 
 /**
@@ -50,6 +55,8 @@ export interface CreateChannelInput {
  * @property {Input<ChannelJoinRuleEntity>} joinRule The rule for joining and whether the channel is searchable. Undefined
  *  means do not change.
  * @property {Input<string | undefined>} avatarUrl The avatar URL of the channel. Undefined means do not change.
+ * @property {Input<AvatarImageMetadataEntity | undefined>} avatarImageMetadata The metadata associated with the avatar image when
+ *  setting the avatar url.
  */
 export interface UpdateChannelInput {
   selfHandleId: string
@@ -59,6 +66,7 @@ export interface UpdateChannelInput {
   tags?: Input<string[]>
   joinRule?: Input<ChannelJoinRuleEntity>
   avatarUrl?: Input<string | undefined>
+  avatarImageMetadata?: Input<AvatarImageMetadataEntity | undefined>
 }
 
 /**

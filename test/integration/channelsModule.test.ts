@@ -7,6 +7,15 @@
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { v4 } from 'uuid'
+import {
+  setupSecureCommsClient,
+  setupSudoPlatformConfig,
+} from './util/secureCommsClientLifecycle'
+import {
+  isHandleExpectedMembershipInChannel,
+  runTestsIfNotIntegrationLive,
+  testHandleName,
+} from './util/util'
 import { getSecureCommsServiceConfig } from '../../src/private/data/common/config'
 import { delay } from '../../src/private/util/delay'
 import {
@@ -30,14 +39,6 @@ import {
   UnauthorizedError,
 } from '../../src/public'
 import { APIDataFactory } from '../data-factory/api'
-import {
-  setupSecureCommsClient,
-  setupSudoPlatformConfig,
-} from './util/secureCommsClientLifecycle'
-import {
-  isHandleExpectedMembershipInChannel,
-  runTestsIfNotIntegrationLive,
-} from './util/util'
 
 runTestsIfNotIntegrationLive(
   'SecureCommsClient ChannelsModule Test Suite',
@@ -121,7 +122,7 @@ runTestsIfNotIntegrationLive(
 
     describe('createChannel, getChannel, getChannels and searchPublicChannels', () => {
       it('creates and retrieves a channel successfully', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -182,7 +183,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('creates and retrieves multiple channels ignoring unknown input ids successfully', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -214,7 +215,7 @@ runTestsIfNotIntegrationLive(
       // Public channel search
       runTestsIfAdvancedSearchEnabled(() => {
         it('searches for public channel and returns single expected channel matching search query', async () => {
-          const handleName = `test_handle_${v4()}`
+          const handleName = testHandleName()
           inviterHandle = await client1.handles.provisionHandle({
             name: handleName,
           })
@@ -298,7 +299,7 @@ runTestsIfNotIntegrationLive(
             return
           }
 
-          const handleName = `test_handle_${v4()}`
+          const handleName = testHandleName()
           inviterHandle = await client1.handles.provisionHandle({
             name: handleName,
           })
@@ -344,7 +345,7 @@ runTestsIfNotIntegrationLive(
         })
 
         it('searches for public hannels and returns empty channels for non-existent public channels', async () => {
-          const handleName = `test_handle_${v4()}`
+          const handleName = testHandleName()
           inviterHandle = await client1.handles.provisionHandle({
             name: handleName,
           })
@@ -362,7 +363,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('lists empty channels for empty ids input', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -376,7 +377,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('lists empty channels for non-existent channels', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -390,7 +391,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw an InvalidArgumentError when input ids exceed the limit', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -408,7 +409,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw a ChannelNameNotAvailableError when attempting to create a channel that contains a name that already exists', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -436,7 +437,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw a HandleNotFoundError when an attempting to invite a non-existent handle', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -459,7 +460,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw a InvalidArgumentError when an attempting to create a channel inviting the creator', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -482,7 +483,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw an UnacceptableWordsError when attempting to create a channel with an unacceptable name', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -500,7 +501,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw an UnacceptableWordsError when attempting to create a group with an unacceptable description', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -518,7 +519,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('returns undefined for non-existent channel when attempting to retrieve a channel', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -534,7 +535,7 @@ runTestsIfNotIntegrationLive(
 
     describe('createChannel, updateChannel and deleteChannel', () => {
       it('creates, updates and deletes a channel and returns expected output', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -591,7 +592,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw a ChannelNotFoundError when attempting to update a non-existent channel', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -606,7 +607,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw an UnacceptableWordsError when attempting to update name with unacceptable words', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -637,7 +638,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw a HandleNotFoundError when attempting to update a channel for a non-existent handle', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -670,7 +671,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw a ChannelNotFoundError when attempting to delete a non-existent channel', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -684,7 +685,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw an InvalidChannelStateError when attempting to delete a public channel', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -716,7 +717,7 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should throw a HandleNotFoundError when attempting to delete a channel for a non-existent handle', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
@@ -748,11 +749,11 @@ runTestsIfNotIntegrationLive(
 
     describe('joinChannel, leaveChannel and getChannelMembers', () => {
       it('joins, leaves and lists joined channels successfully', async () => {
-        const handleName = `test_handle_${v4()}`
+        const handleName = testHandleName()
         inviterHandle = await client1.handles.provisionHandle({
           name: handleName,
         })
-        const handleName2 = `test_handle2_${v4()}`
+        const handleName2 = testHandleName('2')
         inviteeHandle = await client1.handles.provisionHandle({
           name: handleName2,
         })
@@ -844,13 +845,13 @@ runTestsIfNotIntegrationLive(
 
     describe('createChannel, listJoined invitation and membership lifecycle', () => {
       it('send and accept invitation and list channels that the user has joined successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -895,10 +896,17 @@ runTestsIfNotIntegrationLive(
         const invitations = await client2.channels.listInvitations(
           inviteeHandle.handleId,
         )
-        const invitedChannelId = invitations.find(
+
+        const invitation = invitations.find(
           (invite) =>
             invite.channelId.toString() === channel.channelId.toString(),
-        )?.channelId
+        )
+        expect(
+          invitation?.inviter?.handleId == inviterHandle.handleId &&
+            invitation?.inviter?.name == inviterHandleName,
+        )
+        const invitedChannelId = invitation?.channelId
+
         expect(invitedChannelId).not.toBeUndefined()
 
         // Invitee handle accepts the invitation from the inviter handle
@@ -1004,13 +1012,13 @@ runTestsIfNotIntegrationLive(
       })
 
       it('send invitation and decline invitation to join a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1097,13 +1105,13 @@ runTestsIfNotIntegrationLive(
       })
 
       it('send invitation and withdraw invitation successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1185,13 +1193,13 @@ runTestsIfNotIntegrationLive(
 
     describe('invitation request (knock) lifecycle', () => {
       it('send invitation request and withdraw invitation request successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1245,13 +1253,13 @@ runTestsIfNotIntegrationLive(
       })
 
       it('send invitation request and decline invitation request successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1307,13 +1315,13 @@ runTestsIfNotIntegrationLive(
       })
 
       it('send invitation request and accept invitation request successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1368,13 +1376,13 @@ runTestsIfNotIntegrationLive(
       })
 
       it.skip('send invitation request and list sent and received invitation requests successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1448,13 +1456,13 @@ runTestsIfNotIntegrationLive(
 
     describe('kickHandle, banHandle and unbanHandle', () => {
       it('should ban and unbans a handle from a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1525,13 +1533,13 @@ runTestsIfNotIntegrationLive(
       })
 
       it('should kick a handle from a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })

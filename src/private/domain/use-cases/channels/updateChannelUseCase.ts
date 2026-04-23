@@ -30,6 +30,7 @@ import {
   ChannelsService,
   UpdateChannelInput,
 } from '../../entities/channels/channelsService'
+import { AvatarImageMetadataEntity } from '../../entities/common/avatarImageMetadataEntity'
 import { PublicMediaType } from '../../entities/media/mediaCredentialEntity'
 import { RoomPowerLevelsEntity } from '../../entities/rooms/roomPowerLevelsEntity'
 import { WordValidationService } from '../../entities/wordValidation/wordValidationService'
@@ -90,6 +91,9 @@ export class UpdateChannelUseCase {
 
     // Update the avatar
     let avatarUrl: Input<string | undefined> | undefined = undefined
+    let avatarImageMetadata:
+      | Input<AvatarImageMetadataEntity | undefined>
+      | undefined = undefined
     if (input.avatar !== undefined) {
       if (input.avatar.value !== undefined) {
         const { file, fileName, fileType } = input.avatar.value
@@ -107,9 +111,14 @@ export class UpdateChannelUseCase {
           fileType,
           isVisible,
         )
+
         avatarUrl = { value: avatarMxcUrl }
+        avatarImageMetadata = {
+          value: { mimeType: input.avatar.value.fileType },
+        }
       } else {
         avatarUrl = { value: undefined }
+        avatarImageMetadata = { value: undefined }
       }
     }
 
@@ -122,6 +131,7 @@ export class UpdateChannelUseCase {
       tags: input.tags,
       joinRule: input.joinRule,
       avatarUrl,
+      avatarImageMetadata,
     }
     const result = await this.channelsService.update(request)
 

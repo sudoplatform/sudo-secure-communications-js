@@ -5,6 +5,7 @@
  */
 
 import { GroupId } from '../../../../public'
+import { HandleEntity } from '../handle/handleEntity'
 
 /**
  * Core entity representation of a group business rule.
@@ -17,6 +18,7 @@ import { GroupId } from '../../../../public'
  * @property {GroupPermissionsEntity} permissions Optional permissions describing what roles can perform
  *  certain actions within the group.
  * @property {number} memberCount The number of joined members of the group.
+ * @property {HandleEntity} inviter Optional handle of the inviter.
  */
 export interface GroupEntity {
   groupId: GroupId
@@ -25,6 +27,7 @@ export interface GroupEntity {
   avatarUrl?: string
   permissions?: GroupPermissionsEntity
   memberCount: number
+  inviter?: HandleEntity
 }
 
 /**

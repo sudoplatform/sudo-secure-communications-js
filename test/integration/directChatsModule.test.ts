@@ -8,7 +8,7 @@ import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { v4 } from 'uuid'
 import { setupSecureCommsClient } from './util/secureCommsClientLifecycle'
-import { isHandleJoinedToDirectChat } from './util/util'
+import { isHandleJoinedToDirectChat, testHandleName } from './util/util'
 import { delay } from '../../src/private/util/delay'
 import {
   ChatId,
@@ -47,13 +47,13 @@ describe('SecureCommsClient DirectChatModule Test Suite', () => {
   })
 
   it('creates a direct chat between two handles successfully', async () => {
-    const inviterHandleName = `test_inviter_handle_${v4()}`
+    const inviterHandleName = testHandleName('inviter')
     inviterHandle = await client1.handles.provisionHandle({
       name: inviterHandleName,
     })
     await client1.startSyncing(inviterHandle.handleId)
 
-    const inviteeHandleName = `test_invitee_handle_${v4()}`
+    const inviteeHandleName = testHandleName('invitee')
     inviteeHandle = await client2.handles.provisionHandle({
       name: inviteeHandleName,
     })
@@ -92,13 +92,13 @@ describe('SecureCommsClient DirectChatModule Test Suite', () => {
   })
 
   it('accepts invitation and joins a direct chat between handles successfully', async () => {
-    const inviterHandleName = `test_inviter_handle_${v4()}`
+    const inviterHandleName = testHandleName('inviter')
     inviterHandle = await client1.handles.provisionHandle({
       name: inviterHandleName,
     })
     await client1.startSyncing(inviterHandle.handleId)
 
-    const inviteeHandleName = `test_invitee_handle_${v4()}`
+    const inviteeHandleName = testHandleName('invitee')
     inviteeHandle = await client2.handles.provisionHandle({
       name: inviteeHandleName,
     })
@@ -139,13 +139,13 @@ describe('SecureCommsClient DirectChatModule Test Suite', () => {
   })
 
   it('declines invitation to join direct chat between two handles successfully', async () => {
-    const inviterHandleName = `test_inviter_handle_${v4()}`
+    const inviterHandleName = testHandleName('inviter')
     inviterHandle = await client1.handles.provisionHandle({
       name: inviterHandleName,
     })
     await client1.startSyncing(inviterHandle.handleId)
 
-    const inviteeHandleName = `test_invitee_handle_${v4()}`
+    const inviteeHandleName = testHandleName('invitee')
     inviteeHandle = await client2.handles.provisionHandle({
       name: inviteeHandleName,
     })
@@ -186,13 +186,13 @@ describe('SecureCommsClient DirectChatModule Test Suite', () => {
   })
 
   it('should throw a DirectChatExistsError when a direct chat between two handles already exists', async () => {
-    const inviterHandleName = `test_inviter_handle_${v4()}`
+    const inviterHandleName = testHandleName('inviter')
     inviterHandle = await client1.handles.provisionHandle({
       name: inviterHandleName,
     })
     await client1.startSyncing(inviterHandle.handleId)
 
-    const inviteeHandleName = `test_invitee_handle_${v4()}`
+    const inviteeHandleName = testHandleName('invitee')
     inviteeHandle = await client2.handles.provisionHandle({
       name: inviteeHandleName,
     })
@@ -214,12 +214,12 @@ describe('SecureCommsClient DirectChatModule Test Suite', () => {
   })
 
   it('should throw a RoomNotFoundError when attempting to accept an invitation to a non-existent direct chat', async () => {
-    const inviterHandleName = `test_inviter_handle_${v4()}`
+    const inviterHandleName = testHandleName('inviter')
     inviterHandle = await client1.handles.provisionHandle({
       name: inviterHandleName,
     })
 
-    const inviteeHandleName = `test_invitee_handle_${v4()}`
+    const inviteeHandleName = testHandleName('invitee')
     inviteeHandle = await client2.handles.provisionHandle({
       name: inviteeHandleName,
     })
@@ -233,12 +233,12 @@ describe('SecureCommsClient DirectChatModule Test Suite', () => {
   })
 
   it('should throw a RoomNotFoundError when attempting to decline an invitation to a non-existent direct chat', async () => {
-    const inviterHandleName = `test_inviter_handle_${v4()}`
+    const inviterHandleName = testHandleName('inviter')
     inviterHandle = await client1.handles.provisionHandle({
       name: inviterHandleName,
     })
 
-    const inviteeHandleName = `test_invitee_handle_${v4()}`
+    const inviteeHandleName = testHandleName('invitee')
     inviteeHandle = await client2.handles.provisionHandle({
       name: inviteeHandleName,
     })
@@ -252,13 +252,13 @@ describe('SecureCommsClient DirectChatModule Test Suite', () => {
   })
 
   it('blocks and unblocks a handle successfully', async () => {
-    const inviterHandleName = `test_inviter_handle_${v4()}`
+    const inviterHandleName = testHandleName('inviter')
     inviterHandle = await client1.handles.provisionHandle({
       name: inviterHandleName,
     })
     await client1.startSyncing(inviterHandle.handleId)
 
-    const inviteeHandleName = `test_invitee_handle_${v4()}`
+    const inviteeHandleName = testHandleName('invitee')
     inviteeHandle = await client2.handles.provisionHandle({
       name: inviteeHandleName,
     })

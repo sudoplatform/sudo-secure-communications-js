@@ -5,6 +5,19 @@
  */
 
 import { v4 } from 'uuid'
+import { ChannelId } from '../../../public'
+import {
+  ChannelEntity,
+  PublicChannelSearchResultEntity,
+} from '../../domain/entities/channels/channelEntity'
+import { ApiClient } from '../common/apiClient'
+import { ChannelJoinRuleTransformer } from './transformer/channelJoinRuleTransformer'
+import { ChannelPowerLevelsTransformer } from './transformer/channelPowerLevelsTransformer'
+import { ChannelSortOrderTransformer } from './transformer/channelSortOrderTransformer'
+import { ChannelTransformer } from './transformer/channelTransformer'
+import { PublicChannelInfoTransformer } from './transformer/publicChannelInfoTransformer'
+import { PublicChannelJoinRuleTransformer } from './transformer/publicChannelJoinRuleTransformer'
+import { PublicChannelSearchResultTransformer } from './transformer/publicChannelSearchResultTransformer'
 import {
   CreateSecureCommsChannelInput,
   ListSecureCommsPublicChannelsInput,
@@ -12,11 +25,6 @@ import {
   UpdateSecureCommsChannelInput,
   UpdateSecureCommsChannelSetInput,
 } from '../../../gen/graphqlTypes'
-import { ChannelId } from '../../../public'
-import {
-  ChannelEntity,
-  PublicChannelSearchResultEntity,
-} from '../../domain/entities/channels/channelEntity'
 import {
   ChannelsService,
   CreateChannelInput,
@@ -26,14 +34,7 @@ import {
   SearchPublicChannelsOutput,
   UpdateChannelInput,
 } from '../../domain/entities/channels/channelsService'
-import { ApiClient } from '../common/apiClient'
-import { ChannelJoinRuleTransformer } from './transformer/channelJoinRuleTransformer'
-import { ChannelPowerLevelsTransformer } from './transformer/channelPowerLevelsTransformer'
-import { ChannelSortOrderTransformer } from './transformer/channelSortOrderTransformer'
-import { ChannelTransformer } from './transformer/channelTransformer'
-import { PublicChannelInfoTransformer } from './transformer/publicChannelInfoTransformer'
-import { PublicChannelJoinRuleTransformer } from './transformer/publicChannelJoinRuleTransformer'
-import { PublicChannelSearchResultTransformer } from './transformer/publicChannelSearchResultTransformer'
+import { AvatarImageMetadataTransformer } from '../common/transformer/avatarImageMetadataTransformer'
 
 export class DefaultChannelsService implements ChannelsService {
   private readonly channelTransformer: ChannelTransformer
@@ -43,6 +44,7 @@ export class DefaultChannelsService implements ChannelsService {
   private readonly publicChannelSearchResultTransformer: PublicChannelSearchResultTransformer
   private readonly publicChannelJoinRuleTransformer: PublicChannelJoinRuleTransformer
   private readonly channelSortOrderTransformer: ChannelSortOrderTransformer
+  private readonly avatarImageMetadataTransformer: AvatarImageMetadataTransformer
 
   constructor(private readonly appSync: ApiClient) {
     this.channelTransformer = new ChannelTransformer()
@@ -54,6 +56,7 @@ export class DefaultChannelsService implements ChannelsService {
     this.publicChannelJoinRuleTransformer =
       new PublicChannelJoinRuleTransformer()
     this.channelSortOrderTransformer = new ChannelSortOrderTransformer()
+    this.avatarImageMetadataTransformer = new AvatarImageMetadataTransformer()
   }
 
   async create(input: CreateChannelInput): Promise<ChannelEntity> {
@@ -62,6 +65,11 @@ export class DefaultChannelsService implements ChannelsService {
       name: input.name ?? v4(),
       description: input.description,
       avatarImageUrl: input.avatarUrl,
+      avatarImageMetadata: input.avatarImageMetadata
+        ? this.avatarImageMetadataTransformer.fromEntityToGraphQL(
+            input.avatarImageMetadata,
+          )
+        : undefined,
       invitations: input.invitedHandleIds,
       joinRule: this.channelJoinRuleTransformer.fromEntityToGraphQL(
         input.joinRule,
@@ -106,6 +114,11 @@ export class DefaultChannelsService implements ChannelsService {
         : undefined
     const setProperties: UpdateSecureCommsChannelSetInput = {
       avatarImageUrl: input.avatarUrl?.value,
+      avatarImageMetadata: input.avatarImageMetadata?.value
+        ? this.avatarImageMetadataTransformer.fromEntityToGraphQL(
+            input.avatarImageMetadata.value,
+          )
+        : undefined,
       description: input.description?.value,
       joinRule: joinRule,
       name: input.name?.value,

@@ -8,6 +8,13 @@ import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { M_POLL_START } from 'matrix-js-sdk/lib/@types/polls'
 import { v4 } from 'uuid'
+import { setupSecureCommsClient } from './util/secureCommsClientLifecycle'
+import {
+  isHandleExpectedMembershipInChannel,
+  isHandleExpectedMembershipInGroup,
+  runTestsIfNotIntegrationLive,
+  testHandleName,
+} from './util/util'
 import { delay } from '../../src/private/util/delay'
 import {
   ChannelId,
@@ -23,12 +30,6 @@ import {
   SecureCommsClient,
 } from '../../src/public'
 import { APIDataFactory } from '../data-factory/api'
-import { setupSecureCommsClient } from './util/secureCommsClientLifecycle'
-import {
-  isHandleExpectedMembershipInChannel,
-  isHandleExpectedMembershipInGroup,
-  runTestsIfNotIntegrationLive,
-} from './util/util'
 
 describe('SecureCommsClient MessagingModule Test Suite', () => {
   jest.setTimeout(240000)
@@ -99,13 +100,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
   runTestsIfNotIntegrationLive('Send Messages in Channel', () => {
     describe('sendMessage, getMessages and searchMessages', () => {
       it('send and retrieve messages between two handles in a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -229,13 +230,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
       })
 
       it('send and retrieve multiple messages between two handles in a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -410,13 +411,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
 
     describe('deleteMessage', () => {
       it('send and delete messages in a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -518,13 +519,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
       })
 
       it('moderator deletes another users message in a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -639,13 +640,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
 
     describe('pinMessage, unpinMessage and getPinnedMessages', () => {
       it('pin and unpin message in a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -795,13 +796,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
 
     describe('createPoll, sendPollResponse, editPoll, endPoll and getPollResponses', () => {
       it('create poll, submit and tally answers in a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -916,13 +917,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
       })
 
       it('update existing poll, submit and tally answers in a channel successfully', async () => {
-        const inviterHandleName = `test_inviter_handle_${v4()}`
+        const inviterHandleName = testHandleName('inviter')
         inviterHandle = await client1.handles.provisionHandle({
           name: inviterHandleName,
         })
         await client1.startSyncing(inviterHandle.handleId)
 
-        const inviteeHandleName = `test_invitee_handle_${v4()}`
+        const inviteeHandleName = testHandleName('invitee')
         inviteeHandle = await client2.handles.provisionHandle({
           name: inviteeHandleName,
         })
@@ -1057,18 +1058,133 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
         })
       })
     })
+
+    describe('markAsUnread', () => {
+      it('send read receipts and then marks a channel as unread successfully', async () => {
+        const inviterHandleName = testHandleName('inviter')
+        inviterHandle = await client1.handles.provisionHandle({
+          name: inviterHandleName,
+        })
+        await client1.startSyncing(inviterHandle.handleId)
+
+        const inviteeHandleName = testHandleName('invitee')
+        inviteeHandle = await client2.handles.provisionHandle({
+          name: inviteeHandleName,
+        })
+        await client2.startSyncing(inviteeHandle.handleId)
+
+        const name = `channel-${v4()}`
+        const description = 'channel-description'
+        const tags = ['tag-1', 'tag-2']
+        const channel = await client1.channels.createChannel({
+          handleId: inviterHandle.handleId,
+          name,
+          description,
+          joinRule: ChannelJoinRule.PUBLIC,
+          tags,
+          invitedHandleIds: [],
+          permissions: APIDataFactory.defaultChannelPermissionsInput,
+          defaultMemberRole: ChannelRole.PARTICIPANT,
+        })
+        expect(channel).toBeDefined()
+        channelIdsToCleanup.push(channel.channelId)
+
+        await delay(5000)
+
+        // Inviter handle sends invitation to invitee handle
+        await client1.channels.sendInvitations({
+          handleId: inviterHandle.handleId,
+          channelId: channel.channelId,
+          targetHandleIds: [inviteeHandle.handleId],
+        })
+
+        // Check if the inviter handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client1,
+          inviterHandle.handleId,
+          channel.channelId,
+          inviterHandle.handleId,
+          MembershipState.JOINED,
+        )
+
+        // Invitee handle accepts the invitation from the inviter handle
+        await client2.channels.acceptInvitation({
+          handleId: inviteeHandle.handleId,
+          channelId: channel.channelId,
+        })
+
+        await delay(5000)
+
+        // Check if the invitee handle is joined to the channel
+        await isHandleExpectedMembershipInChannel(
+          client2,
+          inviteeHandle.handleId,
+          channel.channelId,
+          inviteeHandle.handleId,
+          MembershipState.JOINED,
+        )
+
+        // Inviter sends a message in a channel
+        await client1.messaging.sendMessage({
+          handleId: inviterHandle.handleId,
+          recipient: channel.channelId,
+          message: 'This is a message from inviter to invitee in a channel',
+          mentions: [],
+        })
+
+        await delay(5000)
+
+        let summaries = await client2.messaging.getChatSummaries({
+          handleId: inviteeHandle.handleId,
+          recipients: [channel.channelId],
+        })
+        expect(summaries).toHaveLength(1)
+        expect(summaries[0].hasUnreadMessages).toBe(true)
+        expect(summaries[0].unreadCount.all).toBeGreaterThan(0)
+
+        await client2.messaging.markAsRead({
+          handleId: inviteeHandle.handleId,
+          recipient: channel.channelId,
+        })
+
+        await delay(5000)
+
+        summaries = await client2.messaging.getChatSummaries({
+          handleId: inviteeHandle.handleId,
+          recipients: [channel.channelId],
+        })
+        expect(summaries).toHaveLength(1)
+        expect(summaries[0].hasUnreadMessages).toBe(false)
+        expect(summaries[0].unreadCount.all).toBe(0)
+
+        await client2.messaging.markAsUnread({
+          handleId: inviteeHandle.handleId,
+          recipient: channel.channelId,
+        })
+
+        await delay(5000)
+
+        summaries = await client2.messaging.getChatSummaries({
+          handleId: inviteeHandle.handleId,
+          recipients: [channel.channelId],
+        })
+        expect(summaries).toHaveLength(1)
+        expect(summaries[0].hasUnreadMessages).toBe(true)
+        expect(summaries[0].unreadCount.all).toBeGreaterThan(0)
+      })
+    })
   })
 
   // TODO: Renable once the StorageModule is implemented with rust crypto initialization
   describe.skip('Send Messages in Group', () => {
     it('send and retrieve messages between two handles in a group successfully', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })
@@ -1185,13 +1301,13 @@ describe('SecureCommsClient MessagingModule Test Suite', () => {
 
   runTestsIfNotIntegrationLive('Timeline Listeners', () => {
     it('timeline listeners should be called when new message is received', async () => {
-      const inviterHandleName = `test_inviter_handle_${v4()}`
+      const inviterHandleName = testHandleName('inviter')
       inviterHandle = await client1.handles.provisionHandle({
         name: inviterHandleName,
       })
       await client1.startSyncing(inviterHandle.handleId)
 
-      const inviteeHandleName = `test_invitee_handle_${v4()}`
+      const inviteeHandleName = testHandleName('invitee')
       inviteeHandle = await client2.handles.provisionHandle({
         name: inviteeHandleName,
       })

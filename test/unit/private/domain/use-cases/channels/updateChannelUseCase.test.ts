@@ -104,6 +104,7 @@ describe('UpdateChannelUseCase Test Suite', () => {
         joinRule: undefined,
         tags: undefined,
         avatarUrl: undefined,
+        avatarImageMetadata: undefined,
       })
       verify(mockChannelsService.update(anything())).once()
     })
@@ -191,6 +192,7 @@ describe('UpdateChannelUseCase Test Suite', () => {
         joinRule: undefined,
         tags: undefined,
         avatarUrl: undefined,
+        avatarImageMetadata: undefined,
       })
       verify(mockChannelsService.update(anything())).once()
     })
@@ -207,6 +209,9 @@ describe('UpdateChannelUseCase Test Suite', () => {
         mediaCredential,
       }
       const avatarUrl = 'mxc:foo.bar'
+      const imageMetadata = {
+        mimeType: avatar.fileType,
+      }
       const validWords = new Set([name])
       when(mockWordValidationService.checkWordValidity(anything())).thenResolve(
         validWords,
@@ -282,6 +287,7 @@ describe('UpdateChannelUseCase Test Suite', () => {
         joinRule: undefined,
         tags: undefined,
         avatarUrl: { value: avatarUrl },
+        avatarImageMetadata: { value: imageMetadata },
       })
       verify(mockChannelsService.update(anything())).once()
     })
@@ -298,6 +304,9 @@ describe('UpdateChannelUseCase Test Suite', () => {
         mediaCredential,
       }
       const avatarUrl = 'mxc:foo.bar'
+      const imageMetadata = {
+        mimeType: avatar.fileType,
+      }
       const validWords = new Set([name])
       when(mockWordValidationService.checkWordValidity(anything())).thenResolve(
         validWords,
@@ -362,6 +371,7 @@ describe('UpdateChannelUseCase Test Suite', () => {
         joinRule: undefined,
         tags: undefined,
         avatarUrl: { value: avatarUrl },
+        avatarImageMetadata: { value: imageMetadata },
       })
       verify(mockChannelsService.update(anything())).once()
     })

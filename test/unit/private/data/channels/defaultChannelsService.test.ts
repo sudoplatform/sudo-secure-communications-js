@@ -57,12 +57,14 @@ describe('DefaultChannelsService Test Suite', () => {
       const description = 'fooDescription'
       const tags = ['tag-1', 'tag-2']
       const avatarUrl = 'http://foobar.com'
+      const avatarImageMetadata = { mimeType: 'mimetype' }
       const input: CreateChannelInput = {
         selfHandleId,
         name,
         description,
         tags,
         avatarUrl,
+        avatarImageMetadata,
         invitedHandleIds: [],
         joinRule: ChannelJoinRuleEntity.PUBLIC,
         powerLevels: undefined,
@@ -80,6 +82,7 @@ describe('DefaultChannelsService Test Suite', () => {
         tags,
         powerLevels: undefined,
         avatarImageUrl: avatarUrl,
+        avatarImageMetadata: avatarImageMetadata,
         joinRule: SecureCommsChannelJoinRule.Public,
         invitations: [],
       })
@@ -149,6 +152,7 @@ describe('DefaultChannelsService Test Suite', () => {
           tags: undefined,
           description: undefined,
           avatarImageUrl: undefined,
+          avatarImageMetadata: undefined,
           joinRule: undefined,
         },
         unset: [],
@@ -188,6 +192,7 @@ describe('DefaultChannelsService Test Suite', () => {
           tags: undefined,
           description: undefined,
           avatarImageUrl: undefined,
+          avatarImageMetadata: undefined,
           joinRule: undefined,
         },
         unset: [SecureCommsChannelOptionalProperties.Description],
@@ -227,6 +232,7 @@ describe('DefaultChannelsService Test Suite', () => {
           tags: undefined,
           description: undefined,
           avatarImageUrl: undefined,
+          avatarImageMetadata: undefined,
           joinRule: undefined,
         },
         unset: [SecureCommsChannelOptionalProperties.AvatarImageUrl],

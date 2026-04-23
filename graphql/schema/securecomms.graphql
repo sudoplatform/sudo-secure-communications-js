@@ -296,6 +296,11 @@ input SecureCommsChannelPowerLevelsInput {
   usersDefault: Int
 }
 
+# Metadata about an avatar image when setting avatar image URL
+input AvatarImageMetadataInput {
+  mimeType: String
+}
+
 # Input to createSecureCommsChannel mutation
 input CreateSecureCommsChannelInput {
   # Handle ID of the creator of the channel. This handle must be owned by
@@ -313,6 +318,8 @@ input CreateSecureCommsChannelInput {
   joinRule: SecureCommsChannelJoinRule!
   # URL of avatar to be used for channel if any
   avatarImageUrl: String
+  # Metadata of avatar.
+  avatarImageMetadata: AvatarImageMetadataInput
   # Other handle IDs to invite to the channel
   invitations: [String!]
   # Non-default power levels to set, if any. Non-default power levels for individual users are
@@ -338,6 +345,9 @@ input UpdateSecureCommsChannelSetInput {
 
   # Avatar image URL
   avatarImageUrl: String
+
+  # Metadata of avatar.
+  avatarImageMetadata: AvatarImageMetadataInput
 }
 
 # Names of SecureCommsChannel properties that are able to be unset
