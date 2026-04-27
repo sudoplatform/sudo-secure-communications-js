@@ -40,6 +40,7 @@ import {
   PushRuleAction,
   PushRuleCondition,
   PushRuleKind,
+  ReceiptType,
   RelationType,
   Room,
   Visibility,
@@ -97,6 +98,7 @@ const SLIDING_SYNC_INITIAL_ROOM_LIST_SIZE = 100
 const SLIDING_SYNC_EXTEND_WITHIN = 5
 const SLIDING_SYNC_EXTEND_BY = 50
 const SLIDING_SYNC_ROOM_SUBSCRIBE_WAIT_MS = 35000
+const JOIN_ROOM_LOCAL_CACHE_WAIT_MS = 10_000
 const SLIDING_SYNC_REQUIRED_STATE = [
   [EventType.RoomName, ''],
   [EventType.RoomAvatar, ''],
@@ -636,7 +638,10 @@ export class MatrixClientManager {
     }
   }
 
-  private waitForRoomAfterSubscribe(roomId: string): Promise<Room | undefined> {
+  private waitForRoomInLocalCache(
+    roomId: string,
+    timeoutMs: number,
+  ): Promise<Room | undefined> {
     const existing = this.client.getRoom(roomId)
     if (existing) {
       return Promise.resolve(existing)
@@ -651,9 +656,16 @@ export class MatrixClientManager {
       const timeoutId = setTimeout(() => {
         this.client.removeListener(ClientEvent.Room, onRoom)
         resolve(this.client.getRoom(roomId) ?? undefined)
-      }, SLIDING_SYNC_ROOM_SUBSCRIBE_WAIT_MS)
+      }, timeoutMs)
       this.client.on(ClientEvent.Room, onRoom)
     })
+  }
+
+  private waitForRoomAfterSubscribe(roomId: string): Promise<Room | undefined> {
+    return this.waitForRoomInLocalCache(
+      roomId,
+      SLIDING_SYNC_ROOM_SUBSCRIBE_WAIT_MS,
+    )
   }
 
   public async getRoomType(
@@ -861,8 +873,19 @@ export class MatrixClientManager {
     try {
       await this.client.joinRoom(id)
     } catch (err) {
-      const msg = 'Failed to join room'
+      const msg = 'Failed to join room: join failed'
       this.log.error(msg, { err })
+      throw new Error(msg)
+    }
+
+    const room = await this.waitForRoomInLocalCache(
+      id,
+      JOIN_ROOM_LOCAL_CACHE_WAIT_MS,
+    )
+    if (!room) {
+      const msg =
+        'Failed to join room: joined but room did not appear in local cache'
+      this.log.error(msg)
       throw new Error(msg)
     }
   }
@@ -873,7 +896,7 @@ export class MatrixClientManager {
     try {
       await this.client.leave(id)
     } catch (err) {
-      const msg = 'Failed to leave room'
+      const msg = 'Failed to leave room: leave failed'
       this.log.error(msg, { err })
       throw new Error(msg)
     }
@@ -953,8 +976,19 @@ export class MatrixClientManager {
     try {
       await this.client.knockRoom(id, { reason })
     } catch (err) {
-      const msg = 'Failed to knock room'
+      const msg = 'Failed to knock room: knock failed'
       this.log.error(msg, { err })
+      throw new Error(msg)
+    }
+
+    const room = await this.waitForRoomInLocalCache(
+      id,
+      JOIN_ROOM_LOCAL_CACHE_WAIT_MS,
+    )
+    if (!room) {
+      const msg =
+        'Failed to knock room: knocked but room did not appear in local cache'
+      this.log.error(msg)
       throw new Error(msg)
     }
   }
@@ -1675,11 +1709,15 @@ export class MatrixClientManager {
       if (!targetEvent) {
         throw new Error('Valid event could not be found')
       }
-      const receipts = room.getReceiptsForEvent(targetEvent) ?? []
+
+      const receipts = room.getReceiptsForEvent(targetEvent)
+      if (!receipts || receipts.length === 0) {
+        return []
+      }
       const messageReceiptTransformer = new MessageReceiptTransformer()
-      return receipts.map((receipt) =>
-        messageReceiptTransformer.fromMatrixToEntity(receipt),
-      )
+      return receipts
+        .filter((receipt) => receipt.type === ReceiptType.Read)
+        .map((receipt) => messageReceiptTransformer.fromMatrixToEntity(receipt))
     } catch (err) {
       const msg = 'Failed to get read receipts'
       this.log.error(msg, { err })

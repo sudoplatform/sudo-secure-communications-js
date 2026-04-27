@@ -362,6 +362,11 @@
       "until": 1777618799,
       "untilISO": "2026-04-30T23:59:59Z",
       "reason": "yaml stack overflow via deeply nested collections - suppress low severity advisory"
+    },
+    "1117066": {
+      "until": 1777593599,
+      "untilISO": "2026-04-30T23:59:59Z",
+      "reason": "immutable prototype pollution - transitive via @ardatan/relay-compiler, resolved via resolution override"
     }
   }
 }
