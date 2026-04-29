@@ -5589,24 +5589,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-nodejs@npm:^0.4.0-beta.1":
-  version: 0.4.0-beta.1
-  resolution: "@matrix-org/matrix-sdk-crypto-nodejs@npm:0.4.0-beta.1"
+"@matrix-org/matrix-sdk-crypto-nodejs@npm:0.5.1":
+  version: 0.5.1
+  resolution: "@matrix-org/matrix-sdk-crypto-nodejs@npm:0.5.1"
   dependencies:
     https-proxy-agent: "npm:^7.0.5"
     node-downloader-helper: "npm:^2.1.9"
-  checksum: 10c0/e20e1cfd3fd40b0d2f58681f985ab8e380e4e5095b27ba3a1535549f883085ccd20bf7767ecf1ad60998df4f25de16bb12411c8a71b24ebba659d7f6bd09df90
+  checksum: 10c0/5c06ddc671e6fb0afa5808384cdc89d9f8b50e35208a732deed6953e9fe0bea2b7df2cd3364f0a6ff5940565aa1f1a85b118b2d6cb497afb0b87586fa28fa91f
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-wasm@npm:15.3.0":
-  version: 15.3.0
-  resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:15.3.0"
-  checksum: 10c0/45628f36b7b0e54a8777ae67a7233dbdf3e3cf14e0d95d21f62f89a7ea7e3f907232f1eb7b1262193b1e227759fad47af829dcccc103ded89011f13c66f01d76
-  languageName: node
-  linkType: hard
-
-"@matrix-org/matrix-sdk-crypto-wasm@npm:^18.0.0":
+"@matrix-org/matrix-sdk-crypto-wasm@npm:18.0.0, @matrix-org/matrix-sdk-crypto-wasm@npm:^18.0.0":
   version: 18.0.0
   resolution: "@matrix-org/matrix-sdk-crypto-wasm@npm:18.0.0"
   checksum: 10c0/6d959084846734d902f883e38ec0c53361b99632e726f5a171f7be0e77b71dd17b69aba93cba6470b0e43a4a30bf439924842fb991c5c9c907ee1907cf3bc1da
@@ -8106,8 +8099,8 @@ __metadata:
     "@graphql-codegen/typed-document-node": "npm:^6.1.4"
     "@graphql-codegen/typescript": "npm:^5.0.6"
     "@graphql-codegen/typescript-operations": "npm:^5.0.6"
-    "@matrix-org/matrix-sdk-crypto-nodejs": "npm:^0.4.0-beta.1"
-    "@matrix-org/matrix-sdk-crypto-wasm": "npm:15.3.0"
+    "@matrix-org/matrix-sdk-crypto-nodejs": "npm:0.5.1"
+    "@matrix-org/matrix-sdk-crypto-wasm": "npm:18.0.0"
     "@sudoplatform/sudo-api-client": "npm:^16.0.0"
     "@sudoplatform/sudo-common": "npm:^12.2.0"
     "@sudoplatform/sudo-entitlements": "npm:^18.0.0"
@@ -9148,21 +9141,21 @@ __metadata:
   linkType: hard
 
 "brace-expansion@npm:^1.1.7":
-  version: 1.1.12
-  resolution: "brace-expansion@npm:1.1.12"
+  version: 1.1.14
+  resolution: "brace-expansion@npm:1.1.14"
   dependencies:
     balanced-match: "npm:^1.0.0"
     concat-map: "npm:0.0.1"
-  checksum: 10c0/975fecac2bb7758c062c20d0b3b6288c7cc895219ee25f0a64a9de662dbac981ff0b6e89909c3897c1f84fa353113a721923afdec5f8b2350255b097f12b1f73
+  checksum: 10c0/b6fdac832bc4e36a753658c9ed052c2e1a2be221763b002df25d1efbf7d21724334e726a6cd5eadc72a4b19ec3efb632d629cc003bc9c62f7af7a7915ffa4385
   languageName: node
   linkType: hard
 
 "brace-expansion@npm:^2.0.1":
-  version: 2.0.2
-  resolution: "brace-expansion@npm:2.0.2"
+  version: 2.1.0
+  resolution: "brace-expansion@npm:2.1.0"
   dependencies:
     balanced-match: "npm:^1.0.0"
-  checksum: 10c0/6d117a4c793488af86b83172deb6af143e94c17bc53b0b3cec259733923b4ca84679d506ac261f4ba3c7ed37c46018e2ff442f9ce453af8643ecd64f4a54e6cf
+  checksum: 10c0/439cedf3e23d7993b37919f1d6fdc653ec21a42437ec3e7460bea9ca8b17edf7a24a633273c31d61aa4335877cf29a443f1871814131c87997a1e6223e1f1502
   languageName: node
   linkType: hard
 

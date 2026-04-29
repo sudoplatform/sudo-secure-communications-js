@@ -1,6 +1,6 @@
 {
   "name": "@sudoplatform/sudo-secure-communications",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "author": "Anonyome Labs, Inc.",
   "license": "Apache-2.0",
   "repository": {
@@ -71,7 +71,7 @@
     "@aws-sdk/credential-provider-cognito-identity": "^3.965.0",
     "@aws-sdk/credential-providers": "^3.965.0",
     "@aws-sdk/lib-storage": "^3.965.0",
-    "@matrix-org/matrix-sdk-crypto-wasm": "15.3.0",
+    "@matrix-org/matrix-sdk-crypto-wasm": "18.0.0",
     "@sudoplatform/sudo-web-crypto-provider": "^10.0.1",
     "@types/md5": "^2.3.6",
     "async-mutex": "^0.5.0",
@@ -127,7 +127,7 @@
     "@graphql-codegen/typed-document-node": "^6.1.4",
     "@graphql-codegen/typescript": "^5.0.6",
     "@graphql-codegen/typescript-operations": "^5.0.6",
-    "@matrix-org/matrix-sdk-crypto-nodejs": "^0.4.0-beta.1",
+    "@matrix-org/matrix-sdk-crypto-nodejs": "0.5.1",
     "@sudoplatform/sudo-api-client": "^16.0.0",
     "@sudoplatform/sudo-common": "^12.2.0",
     "@sudoplatform/sudo-entitlements": "^18.0.0",
@@ -169,203 +169,173 @@
   "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8",
   "auditSuppressions": {
     "1111987": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "Waiting for patch - @smithy/config-resolver"
     },
-    "1112255": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "node-tar used by bufferutil by websocket"
-    },
-    "1112329": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "node-tar used by bufferutil by websocket"
-    },
     "1112455": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "Waiting for patch - Lodash used by other sudo packages"
     },
-    "1112659": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "node-tar used by node-gyp - requires tar >=7.5.8"
-    },
     "1112686": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "eslint advisory - suppress until eslint can be upgraded to >=9.26.0"
     },
     "1112818": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "eslint advisory - suppress until eslint can be upgraded"
     },
     "1112862": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "eslint advisory - suppress until eslint can be upgraded"
     },
     "1112954": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "eslint advisory - suppress until eslint can be upgraded"
     },
     "1113190": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "markdown-it advisory used by typedoc"
     },
-    "1113300": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "node-tar used by node-gyp"
-    },
-    "1113331": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "fast-xml-parser advisory - suppress until fast-xml-parser >=5.3.6"
-    },
     "1113371": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "minimatch advisory used by tooling deps (typescript-eslint, eslint-plugin-import, glob, typedoc)"
     },
-    "1113375": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "node-tar used by node-gyp"
-    },
     "1113398": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "eslint advisory - suppress until eslint can be upgraded"
     },
-    "1113407": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "fast-xml-parser advisory - suppress until fast-xml-parser can be bumped"
-    },
     "1113459": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "minimatch ReDoS - transitive via eslint-plugin-import"
     },
     "1113465": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "minimatch ReDoS - transitive via typescript-eslint, typedoc"
     },
     "1113466": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "minimatch ReDoS - transitive via glob"
     },
     "1113538": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "minimatch ReDoS matchOne - transitive via eslint-plugin-import"
     },
     "1113544": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "minimatch ReDoS matchOne - transitive via typescript-eslint, typedoc"
     },
     "1113545": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460570,
+      "untilISO": "2026-07-31T01:16:10Z",
       "reason": "minimatch ReDoS matchOne - transitive via glob"
     },
     "1113546": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "minimatch ReDoS extglobs - transitive via eslint-plugin-import"
     },
     "1113552": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "minimatch ReDoS extglobs - transitive via typescript-eslint, typedoc"
     },
     "1113553": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "minimatch ReDoS extglobs - transitive via glob"
     },
-    "1113568": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "fast-xml-parser entity encoding bypass - transitive via @aws-sdk/xml-builder"
-    },
-    "1113569": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "fast-xml-parser DoS via entity expansion - transitive via @aws-sdk/xml-builder"
-    },
     "1113714": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "ajv ReDoS via $data - transitive via eslint"
     },
     "1113977": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "http-proxy-agenty - suppress low severity advisory"
     },
-    "1114153": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "fast-xml-parser stack overflow in XMLBuilder - transitive via @aws-sdk/xml-builder"
-    },
     "1114158": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "immutable prototype pollution - suppress low severity advisory"
     },
-    "1114200": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "tar hardlink path traversal - transitive via node-gyp"
-    },
-    "1114526": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "flatted: vulnerable to unbounded recursion DoS in parse() revive phase"
-    },
-    "1114680": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "Race Condition in node-tar: Path Reservations via Unicode Ligature Collisions on macOS APFS"
-    },
     "1115339": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "yaml is vulnerable to Stack Overflow via deeply nested YAML collections"
     },
-    "1115357": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "Prototype Pollution via parse() in NodeJS flatted"
+    "1115538": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "handlebars JavaScript Injection via ts-jest@29.4.6 - suppress until ts-jest ships with fixed handlebars"
     },
-    "1115359": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
-      "reason": "Entity Expansion Limits Bypassed When Set to Zero Due to JavaScript Falsy Evaluation in fast-xml-parser"
+    "1115539": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "handlebars JavaScript Injection via ts-jest@29.4.6 - suppress until ts-jest ships with fixed handlebars"
+    },
+    "1115540": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "brace-expansion DoS via minimatch@3.1.2 - suppress until minimatch can be upgraded"
     },
     "1115541": {
-      "until": 1777618799,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "brace-expansion DoS - suppress low severity advisory"
     },
+    "1115544": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "handlebars Prototype Pollution via ts-jest@29.4.6 - suppress until ts-jest ships with fixed handlebars"
+    },
+    "1115549": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "picomatch POSIX Method Injection via micromatch - suppress until micromatch ships with picomatch >=2.3.2"
+    },
+    "1115551": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "picomatch POSIX Method Injection via tinyglobby - suppress until tinyglobby ships with picomatch >=4.0.4"
+    },
+    "1115552": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "picomatch ReDoS via micromatch - suppress until micromatch ships with picomatch >=2.3.2"
+    },
+    "1115554": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "picomatch ReDoS via tinyglobby - suppress until tinyglobby ships with picomatch >=4.0.4"
+    },
     "1115556": {
-      "until": 1777618799,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
       "reason": "yaml stack overflow via deeply nested collections - suppress low severity advisory"
     },
+    "1115588": {
+      "until": 1785460571,
+      "untilISO": "2026-07-31T01:16:11Z",
+      "reason": "handlebars Prototype Method Access Control Gap via ts-jest@29.4.6 - suppress until ts-jest ships with fixed handlebars"
+    },
     "1117066": {
-      "until": 1777593599,
-      "untilISO": "2026-04-30T23:59:59Z",
+      "until": 1785460572,
+      "untilISO": "2026-07-31T01:16:12Z",
       "reason": "immutable prototype pollution - transitive via @ardatan/relay-compiler, resolved via resolution override"
     }
   }
