@@ -137,16 +137,18 @@ export interface SecureCommsClient {
    * Can only be called after sign-in creation of a handle.
    *
    * @param {HandleId} handleId Identifier of the handle owned by this client.
+   * @param {string} deviceId Optional device id when establishing the session; see {@link startSyncing}.
    */
-  startSyncing(handleId: HandleId): Promise<void>
+  startSyncing(handleId: HandleId, deviceId?: string): Promise<void>
 
   /**
    * Check if the client has finished the initial sync and is ready for use.
    *
    * @param {HandleId} handleId Identifier of the handle owned by this client.
+   * @param {string} deviceId Optional device id when establishing the session; see {@link startSyncing}.
    * @returns {boolean} True if the client is ready for use, false if not.
    */
-  isReady(handleId: HandleId): Promise<boolean>
+  isReady(handleId: HandleId, deviceId?: string): Promise<boolean>
 
   /**
    * Stop syncing.
@@ -278,17 +280,17 @@ export class DefaultSecureCommsClient implements SecureCommsClient {
     this.notifications = new DefaultNotificationsModule(this.sessionManager)
   }
 
-  public async startSyncing(id: HandleId): Promise<void> {
+  public async startSyncing(id: HandleId, deviceId?: string): Promise<void> {
     if (!(await this.userClient.isSignedIn())) {
       throw new NotAuthorizedError()
     }
 
-    const matrixClient = await this.sessionManager.getMatrixClient(id)
+    const matrixClient = await this.sessionManager.getMatrixClient(id, deviceId)
     await matrixClient.startSyncing()
   }
 
-  public async isReady(id: HandleId): Promise<boolean> {
-    const matrixClient = await this.sessionManager.getMatrixClient(id)
+  public async isReady(id: HandleId, deviceId?: string): Promise<boolean> {
+    const matrixClient = await this.sessionManager.getMatrixClient(id, deviceId)
     return matrixClient.isReady()
   }
 

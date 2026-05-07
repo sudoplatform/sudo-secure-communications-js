@@ -14,13 +14,13 @@ import { WordValidationService } from '../../entities/wordValidation/wordValidat
 
 /**
  * Input for `ProvisionHandleUseCase`.
- *
- * @interface ProvisionHandleUseCaseInput
+ * Optional `deviceId` defaults to a new UUID per handle; reusing an id across handles may correlate them on the backend.
  */
 interface ProvisionHandleUseCaseInput {
   id?: string
   name: string
   storePassphrase?: string
+  deviceId?: string
 }
 
 /**
@@ -49,8 +49,8 @@ export class ProvisionHandleUseCase {
     if (wordsToValidate.size !== validWords.size) {
       throw new UnacceptableWordsError()
     }
-    // Use a new device ID for every new handle to avoid any correlation between handles.
-    const deviceId = v4()
+    // Default: a new device ID per handle to avoid correlation; callers may supply a stable id instead.
+    const deviceId = input.deviceId ?? v4()
     const session = await this.sessionService.create({
       id: input.id,
       name: input.name,
@@ -63,6 +63,7 @@ export class ProvisionHandleUseCase {
     await this.sessionManager.ensureValidSession(
       handleId,
       input.storePassphrase,
+      deviceId,
     )
     const result: OwnedHandleEntity = {
       handleId: new HandleId(session.handleId),

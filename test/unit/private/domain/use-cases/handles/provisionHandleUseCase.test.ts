@@ -75,9 +75,13 @@ describe('ProvisionHandleUseCase Test Suite', () => {
       })
       verify(mockSessionService.create(anything())).once()
       verify(
-        mockSessionManager.ensureValidSession(anything(), anything()),
+        mockSessionManager.ensureValidSession(
+          anything(),
+          anything(),
+          anything(),
+        ),
       ).once()
-      const [handleIdArg, storePassphraseArg] = capture(
+      const [handleIdArg, storePassphraseArg, sessionDeviceIdArg] = capture(
         mockSessionManager.ensureValidSession,
       ).first()
       expect(handleIdArg).toStrictEqual<typeof handleIdArg>(
@@ -86,9 +90,7 @@ describe('ProvisionHandleUseCase Test Suite', () => {
       expect(storePassphraseArg).toStrictEqual<typeof storePassphraseArg>(
         storePassphrase,
       )
-      verify(
-        mockSessionManager.ensureValidSession(anything(), anything()),
-      ).once()
+      expect(sessionDeviceIdArg).toBe(inputArgs.deviceId)
     })
 
     it('Provisions the handle with id provided', async () => {
@@ -127,9 +129,13 @@ describe('ProvisionHandleUseCase Test Suite', () => {
       })
       verify(mockSessionService.create(anything())).once()
       verify(
-        mockSessionManager.ensureValidSession(anything(), anything()),
+        mockSessionManager.ensureValidSession(
+          anything(),
+          anything(),
+          anything(),
+        ),
       ).once()
-      const [handleIdArg, storePassphraseArg] = capture(
+      const [handleIdArg, storePassphraseArg, sessionDeviceIdArg] = capture(
         mockSessionManager.ensureValidSession,
       ).first()
       expect(handleIdArg).toStrictEqual<typeof handleIdArg>(
@@ -138,9 +144,37 @@ describe('ProvisionHandleUseCase Test Suite', () => {
       expect(storePassphraseArg).toStrictEqual<typeof storePassphraseArg>(
         storePassphrase,
       )
-      verify(
-        mockSessionManager.ensureValidSession(anything(), anything()),
-      ).once()
+      expect(sessionDeviceIdArg).toBe(inputArgs.deviceId)
+    })
+
+    it('Provisions the handle with deviceId provided', async () => {
+      const deviceId = 'custom-device-id'
+      const name = 'fooName'
+      const words = new Set([name])
+      const storePassphrase = 'testStorePassphrase'
+      when(mockWordValidationService.checkWordValidity(anything())).thenResolve(
+        words,
+      )
+      when(mockSessionService.create(anything())).thenResolve(
+        EntityDataFactory.secureCommsSession,
+      )
+
+      await instanceUnderTest.execute({
+        name,
+        storePassphrase,
+        deviceId,
+      })
+
+      const [inputArgs] = capture(mockSessionService.create).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        id: undefined,
+        name,
+        deviceId,
+      })
+      const [, , sessionDeviceIdArg] = capture(
+        mockSessionManager.ensureValidSession,
+      ).first()
+      expect(sessionDeviceIdArg).toBe(deviceId)
     })
 
     it('Should throw an UnacceptableWordsError when an invalid word is used when provisioning a handle', async () => {

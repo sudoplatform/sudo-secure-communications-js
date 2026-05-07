@@ -82,7 +82,7 @@
     "idb": "^8.0.3",
     "io-ts": "^2.2.22",
     "jsonwebtoken": "^9.0.3",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "matrix-encrypt-attachment": "^1.0.3",
     "md5": "^2.3.0",
     "monocle-ts": "^2.3.13",
@@ -101,10 +101,12 @@
     "minimist": "^1.2.8",
     "graphql": "^16.12.0",
     "got": "^12.6.0",
+    "handlebars": "4.7.9",
     "dset": "^3.1.2",
     "debug": "^4.3.4",
     "ua-parser-js": "^1.0.35",
     "json5": "^2.2.3",
+    "lodash": "4.18.1",
     "fast-xml-parser": "^5.5.6",
     "form-data": "^3.0.4",
     "semver": "^7.5.2",
@@ -333,10 +335,35 @@
       "untilISO": "2026-07-31T01:16:11Z",
       "reason": "handlebars Prototype Method Access Control Gap via ts-jest@29.4.6 - suppress until ts-jest ships with fixed handlebars"
     },
+    "1115810": {
+      "until": 1785460573,
+      "untilISO": "2026-07-31T01:16:13Z",
+      "reason": "lodash prototype pollution in _.unset/_.omit - suppress moderate until lodash >=4.17.24"
+    },
+    "1116957": {
+      "until": 1785460573,
+      "untilISO": "2026-07-31T01:16:13Z",
+      "reason": "fast-xml-parser via @aws-sdk/xml-builder - suppress moderate until AWS SDK pulls fixed xml-builder"
+    },
     "1117066": {
       "until": 1785460572,
       "untilISO": "2026-07-31T01:16:12Z",
       "reason": "immutable prototype pollution - transitive via @ardatan/relay-compiler, resolved via resolution override"
+    },
+    "1117635": {
+      "until": 1785460573,
+      "untilISO": "2026-07-31T01:16:13Z",
+      "reason": "uuid buffer bounds via matrix-js-sdk - suppress moderate until matrix-js-sdk updates uuid"
+    },
+    "1117637": {
+      "until": 1785460573,
+      "untilISO": "2026-07-31T01:16:13Z",
+      "reason": "uuid buffer bounds in dev dependency tree - suppress moderate until transitive uuid >=11.1.1"
+    },
+    "1117683": {
+      "until": 1785460573,
+      "untilISO": "2026-07-31T01:16:13Z",
+      "reason": "ip-address XSS via socks - suppress moderate transitive advisory"
     }
   }
 }

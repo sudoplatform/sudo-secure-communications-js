@@ -15,6 +15,9 @@ import { MatrixClientManager } from '../common/matrixClientManager'
 export class SessionManager {
   private readonly log: Logger
 
+  /** Serializes session work per handle so concurrent callers (e.g. startSyncing + isReady) do not double-create sessions. */
+  private readonly perHandleSessionChain: Record<string, Promise<unknown>> = {}
+
   private readonly sessions: Record<
     string,
     {
@@ -80,16 +83,53 @@ export class SessionManager {
 
   public async getMatrixClient(
     handleId: HandleId,
+    deviceIdIfNoStoredSession?: string,
   ): Promise<MatrixClientManager> {
-    await this.ensureValidSession(handleId)
+    await this.ensureValidSession(
+      handleId,
+      undefined,
+      deviceIdIfNoStoredSession,
+    )
     return this.sessions[handleId.toString()]!.matrixClient!
   }
 
   // MARK: Access Tokens
 
-  public async ensureValidSession(
+  /**
+   * For a given handle, concurrent calls are queued: the next call runs only after the previous
+   * finishes, so overlapping `getMatrixClient` / `ensureValidSession` cannot create duplicate sessions.
+   */
+  private runSessionWorkSerialized<T>(
+    handleId: string,
+    work: () => Promise<T>,
+  ): Promise<T> {
+    const previous = this.perHandleSessionChain[handleId] ?? Promise.resolve()
+    const run = previous.then(() => work())
+    this.perHandleSessionChain[handleId] = run.then(
+      () => {},
+      () => {},
+    )
+    return run
+  }
+
+  public ensureValidSession(
     handleId: HandleId,
     storePassphrase?: string,
+    deviceIdIfNoStoredSession?: string,
+  ): Promise<string> {
+    return this.runSessionWorkSerialized(handleId.toString(), () =>
+      this.ensureValidSessionBody(
+        handleId,
+        storePassphrase,
+        deviceIdIfNoStoredSession,
+      ),
+    )
+  }
+
+  private async ensureValidSessionBody(
+    handleId: HandleId,
+    storePassphrase?: string,
+    deviceIdIfNoStoredSession?: string,
   ): Promise<string> {
     const cachedSession = this.sessions[handleId.toString()]
     const newStorePassphrase: string | undefined =
@@ -108,7 +148,11 @@ export class SessionManager {
     }
 
     // Create new session from storage or fresh token
-    return await this.createNewSession(handleId, newStorePassphrase)
+    return await this.createNewSession(
+      handleId,
+      newStorePassphrase,
+      deviceIdIfNoStoredSession,
+    )
   }
 
   private decodeToken(token: string): {
@@ -327,6 +371,7 @@ export class SessionManager {
   private async getAccessTokenFromStorageOrService(
     handleId: HandleId,
     handleStorage: HandleStorage,
+    deviceIdIfNoStoredSession?: string,
   ): Promise<{ token: string; deviceId: string | undefined }> {
     // Try to get token from storage first
     const storedToken = await this.getAccessTokenFromStorage(handleStorage)
@@ -337,11 +382,12 @@ export class SessionManager {
       }
     }
     // Token not in storage or invalid/expired, get from service
-    // Use deviceId from previously stored token if available
-    const deviceId = storedToken?.deviceId
+    // Prefer deviceId from a previously stored JWT; otherwise optional caller-supplied id for cold sign-in
+    const deviceIdForService =
+      storedToken?.deviceId ?? deviceIdIfNoStoredSession
     const serviceToken = await this.getAccessTokenFromService(
       handleId,
-      deviceId,
+      deviceIdForService,
     )
     return {
       token: serviceToken.token,
@@ -352,6 +398,7 @@ export class SessionManager {
   private async createNewSession(
     handleId: HandleId,
     storePassphrase?: string,
+    deviceIdIfNoStoredSession?: string,
   ): Promise<string> {
     // useHandleStorage will initialize the handle storage if it is not already initialized
     const handleStorage = await this.storageModule.useHandleStorage(
@@ -360,7 +407,11 @@ export class SessionManager {
     )
     // Get access token from storage or service
     const { token: accessToken } =
-      await this.getAccessTokenFromStorageOrService(handleId, handleStorage!)
+      await this.getAccessTokenFromStorageOrService(
+        handleId,
+        handleStorage!,
+        deviceIdIfNoStoredSession,
+      )
     // Parse token once for both matrix client creation and refresh scheduling
     const { decoded, expiry } = this.decodeToken(accessToken)
     // Create a new matrix client
